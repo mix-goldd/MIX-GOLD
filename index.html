@@ -145,8 +145,8 @@
         }
 
         .menu-toggle, .search-toggle {
-            background: none;
-            border: none;
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.12);
             color: var(--text-color);
             font-size: 1.3rem;
             cursor: pointer;
@@ -157,16 +157,27 @@
             justify-content: center;
             border-radius: 50%;
             padding: 4px;
-            transition: background-color 0.2s;
+            transition: background-color 0.2s, border-color 0.2s, color 0.2s, transform 0.2s;
         }
 
         .menu-toggle:hover, .search-toggle:hover {
-            background-color: rgba(255,255,255,0.1);
+            background-color: rgba(255,71,87,0.14);
+            border-color: rgba(255,71,87,0.55);
+            color: #fff;
+            transform: translateY(-1px);
         }
 
         .light-mode .menu-toggle:hover,
         .light-mode .search-toggle:hover {
-            background-color: rgba(0,0,0,0.1);
+            background-color: rgba(255,71,87,0.10);
+            border-color: rgba(255,71,87,0.45);
+            color: var(--primary-color);
+        }
+
+        .light-mode .menu-toggle,
+        .light-mode .search-toggle {
+            background: rgba(0,0,0,0.03);
+            border-color: rgba(0,0,0,0.12);
         }
 
         #preloader {
@@ -2886,15 +2897,27 @@
     cursor: pointer;
     color: var(--text-color);
     font-size: 1.1rem;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.16);
     border-radius: 50%;
-    transition: background-color 0.2s;
+    padding: 0;
+    transition: background-color 0.2s, border-color 0.2s, color 0.2s, transform 0.2s;
     flex-shrink: 0;
   }
   .pixiv-nav-back:hover, .pixiv-nav-next:hover {
-    background: rgba(255,255,255,0.1);
+    background: rgba(255,71,87,0.18);
+    border-color: rgba(255,71,87,0.65);
+    color: #fff;
+    transform: translateY(-1px);
   }
   .light-mode .pixiv-nav-back:hover, .light-mode .pixiv-nav-next:hover {
-    background: rgba(0,0,0,0.1);
+    background: rgba(255,71,87,0.10);
+    border-color: rgba(255,71,87,0.5);
+    color: var(--primary-color);
+  }
+  .light-mode .pixiv-nav-back, .light-mode .pixiv-nav-next {
+    background: rgba(0,0,0,0.04);
+    border-color: rgba(0,0,0,0.14);
   }
   .pixiv-nav-title {
     flex: 1;
@@ -3473,8 +3496,44 @@
         .manga-reader-nav-icons {
             display: flex;
             align-items: center;
-            gap: 4px;
+            gap: 8px;
             flex-shrink: 0;
+        }
+        #manga-reader-lang-btn,
+        #manga-reader-settings-btn {
+            width: 40px;
+            height: 40px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.22);
+        }
+        #manga-reader-lang-btn {
+            color: #8ea2ff;
+            background: rgba(55,66,250,0.18);
+            border-color: rgba(110,123,255,0.65);
+        }
+        #manga-reader-settings-btn {
+            color: #ffd166;
+            background: rgba(255,193,7,0.16);
+            border-color: rgba(255,209,102,0.62);
+        }
+        #manga-reader-lang-btn:hover {
+            color: #fff;
+            background: rgba(55,66,250,0.42);
+            border-color: #9aa7ff;
+        }
+        #manga-reader-settings-btn:hover {
+            color: #fff;
+            background: rgba(255,193,7,0.34);
+            border-color: #ffd166;
+        }
+        .light-mode #manga-reader-lang-btn {
+            color: #3044d8;
+            background: rgba(55,66,250,0.10);
+            border-color: rgba(55,66,250,0.42);
+        }
+        .light-mode #manga-reader-settings-btn {
+            color: #9a6500;
+            background: rgba(255,193,7,0.18);
+            border-color: rgba(154,101,0,0.42);
         }
         #manga-reader-view .pixiv-nav-title {
             text-align: left;
@@ -3886,12 +3945,12 @@
                     </div>
                     <div class="search-filters">
                         <div class="advanced-sort-select" id="filter-type-select">
-                            <div class="sort-trigger"><span>Videos</span> <i class="fas fa-chevron-down"></i></div>
+                            <div class="sort-trigger"><span>Anime</span> <i class="fas fa-chevron-down"></i></div>
                             <div class="sort-dropdown">
-                                <div class="sort-option active" data-value="videos">Videos</div>
+                                <div class="sort-option active" data-value="videos">Anime</div>
                                 <div class="sort-option" data-value="images">Images</div>
                                 <div class="sort-option" data-value="models">Stars</div>
-                                <div class="sort-option" data-value="manga">Anime</div>
+                                <div class="sort-option" data-value="manga">Manga</div>
                                 <div class="sort-option" data-value="manhwa">Manhwa</div>
                             </div>
                         </div>
@@ -4290,7 +4349,7 @@
                 <div class="model-stat-card">
                     <i class="fas fa-video"></i>
                     <span class="model-stat-value" id="model-videos-count">0</span>
-                    <span class="model-stat-label">Videos</span>
+                    <span class="model-stat-label">Anime</span>
                 </div>
                 <div class="model-stat-card">
                     <i class="fas fa-thumbs-up"></i>
@@ -4304,7 +4363,7 @@
                 </div>
             </div>
             <div class="model-posts-section">
-                <div class="section-title" id="model-posts-title">Related Videos</div>
+                <div class="section-title" id="model-posts-title">Related Anime</div>
                 <div id="model-posts-grid" class="model-posts-grid"></div>
             </div>
         </div>
@@ -4324,14 +4383,14 @@
                 menu: "Menu", darkMode: "Dark Mode", language: "Language", general: "General",
                 developer: "Developer", galleryTeam: "MIX GOLD Team", noSavedImages: "No saved items",
                 models: "Stars", noModels: "No stars available",
-                relatedPosts: "Related Videos", modelStats: "Videos",
+                relatedPosts: "Related Anime", modelStats: "Anime",
                 studios: "Studios", series: "Series", images: "PulseX",
                 showMore: "Show More", showLess: "Show Less",
                 videoCategories: "Video Categories", comicsMenu: "Comics", studioMenu: "Studio & Series",
                 mainMenu: "Main Menu", login: "Login",
-                manga: "Anime", manhwa: "Manhwa", notifications: "Notifications", watchHistory: "Watch History",
+                manga: "Manga", manhwa: "Manhwa", notifications: "Notifications", watchHistory: "Watch History",
                 subscribe: "Subscribe", subscribed: "Subscribed", noNotifications: "No notifications yet",
-                noWatchHistory: "No videos watched yet", clearHistory: "Clear History", seeAll: "See All", videos: "Videos",
+                noWatchHistory: "No videos watched yet", clearHistory: "Clear History", seeAll: "See All", videos: "Anime",
                 account: "Account", logout: "Log Out",
                 profile: "Profile", changePhoto: "Change Photo", saveChanges: "Save Changes", username: "Username",
                 pasteImageUrl: "Paste an image link (imgbb, etc.)", useLink: "Use This Link", cropYourPhoto: "Crop Your Photo",
@@ -4344,7 +4403,7 @@
                 postComment: "Post", loadingComments: "Loading...", loading: "Loading...",
                 chapter: "Chapter", chapters: "Chapters", noChapters: "No chapters yet", author: "Author",
                 status: "Status", ongoing: "Ongoing", completed: "Completed", startReading: "Start Reading",
-                noMangaAvailable: "No Anime available yet", nextChapter: "Next Chapter", previousChapter: "Previous Chapter",
+                noMangaAvailable: "No Manga available yet", nextChapter: "Next Chapter", previousChapter: "Previous Chapter",
                 endOfChapter: "End of Chapter",
                 addToFavorite: "Add to Favorite", addedToFavorite: "Added to Favorites", summary: "Summary",
                 availableLanguages: "Available Languages", updateSchedule: "Update Schedule",
@@ -4357,14 +4416,14 @@
                 menu: "القائمة", darkMode: "الوضع الداكن", language: "اللغة", general: "عام",
                 developer: "المطور", galleryTeam: "فريق MIX GOLD", noSavedImages: "لا توجد عناصر محفوظة",
                 models: "ممثلون", noModels: "لا يوجد ممثلون",
-                relatedPosts: "فيديوهات ذات صلة", modelStats: "فيديوهات",
+                relatedPosts: "أنمي ذات صلة", modelStats: "Anime",
                 studios: "استوديوهات", series: "سلاسل", images: "PulseX",
                 showMore: "عرض المزيد", showLess: "عرض أقل",
                 videoCategories: "فئات الفيديو", comicsMenu: "كوميكس", studioMenu: "استوديو وسلاسل",
                 mainMenu: "القائمة الرئيسية", login: "تسجيل الدخول",
-                manga: "Anime", manhwa: "مانهوا", notifications: "الإشعارات", watchHistory: "سجل المشاهدة",
+                manga: "Manga", manhwa: "مانهوا", notifications: "الإشعارات", watchHistory: "سجل المشاهدة",
                 subscribe: "اشتراك", subscribed: "مُشترك", noNotifications: "لا توجد إشعارات بعد",
-                noWatchHistory: "لم تشاهد أي فيديو بعد", clearHistory: "مسح السجل", seeAll: "عرض الكل", videos: "فيديوهات",
+                noWatchHistory: "لم تشاهد أي فيديو بعد", clearHistory: "مسح السجل", seeAll: "عرض الكل", videos: "Anime",
                 account: "الحساب", logout: "تسجيل الخروج",
                 profile: "الملف الشخصي", changePhoto: "تغيير الصورة", saveChanges: "حفظ التغييرات", username: "اسم المستخدم",
                 pasteImageUrl: "الصق رابط صورة (imgbb وغيره)", useLink: "استخدام هذا الرابط", cropYourPhoto: "قص الصورة",
@@ -4377,7 +4436,7 @@
                 postComment: "نشر", loadingComments: "جارٍ التحميل...", loading: "جارٍ التحميل...",
                 chapter: "الفصل", chapters: "الفصول", noChapters: "لا توجد فصول بعد", author: "المؤلف",
                 status: "الحالة", ongoing: "مستمرة", completed: "مكتملة", startReading: "ابدأ القراءة",
-                noMangaAvailable: "لا يوجد Anime متاح بعد", nextChapter: "الفصل التالي", previousChapter: "الفصل السابق",
+                noMangaAvailable: "لا يوجد Manga متاح بعد", nextChapter: "الفصل التالي", previousChapter: "الفصل السابق",
                 endOfChapter: "نهاية الفصل",
                 addToFavorite: "أضف للمفضلة", addedToFavorite: "أُضيفت للمفضلة", summary: "الملخص",
                 availableLanguages: "اللغات المتاحة", updateSchedule: "جدول التحديث",
@@ -5657,7 +5716,7 @@
         function setFilterType(type) {
             currentFilterType = type;
             const trigger = document.querySelector('#filter-type-select .sort-trigger span');
-            const filterLabels = { videos: 'Videos', images: 'PulseX', models: 'Stars', manga: 'Anime', manhwa: 'Manhwa' };
+            const filterLabels = { videos: 'Anime', images: 'PulseX', models: 'Stars', manga: 'Manga', manhwa: 'Manhwa' };
             if (trigger) trigger.textContent = filterLabels[type] || type.charAt(0).toUpperCase() + type.slice(1);
             document.querySelectorAll('#filter-type-select .sort-option').forEach(opt => {
                 opt.classList.toggle('active', opt.dataset.value === type);
@@ -6866,7 +6925,7 @@
             }
 
             const tabOptions = [];
-            if (savedVideos.length > 0) tabOptions.push({ value: 'videos', label: `Videos (${savedVideos.length})` });
+            if (savedVideos.length > 0) tabOptions.push({ value: 'videos', label: `Anime (${savedVideos.length})` });
             if (savedPureImages.length > 0) tabOptions.push({ value: 'images', label: `PulseX (${savedPureImages.length})` });
             if (savedModelObjects.length > 0) tabOptions.push({ value: 'models', label: `${t('models')} (${savedModelObjects.length})` });
             if (savedManga.length > 0) tabOptions.push({ value: 'manga', label: `${t('manga')} (${savedManga.length})` });
