@@ -8853,11 +8853,45 @@ function toggleSave(url, cardElement) {
         function bindPostDetailEvents() {
             document.getElementById('like-btn').onclick = handleLikeClick;
             document.getElementById('dislike-btn').onclick = handleDislikeClick;
+            const shareBtn = document.getElementById('share-btn');
+            if (shareBtn) shareBtn.onclick = handleShare;
         }
 
-        function handleShare() {
+        async function handleShare() {
             const url = window.location.href;
-            navigator.clipboard.writeText(url).then(() => alert('Link copied!'));
+            const title = document.title || 'MIX GOLD';
+            const text = currentMangaPost?.name || currentPostCard?.dataset?.name || title;
+
+            if (typeof navigator.share === 'function') {
+                try {
+                    await navigator.share({ title, text, url });
+                    return;
+                } catch (error) {
+                    // إلغاء لوحة المشاركة لا يعني فشلًا، ولا ينبغي نسخ الرابط عندها.
+                    if (error?.name === 'AbortError') return;
+                }
+            }
+
+            try {
+                if (navigator.clipboard?.writeText) {
+                    await navigator.clipboard.writeText(url);
+                } else {
+                    const textArea = document.createElement('textarea');
+                    textArea.value = url;
+                    textArea.setAttribute('readonly', '');
+                    textArea.style.position = 'fixed';
+                    textArea.style.opacity = '0';
+                    document.body.appendChild(textArea);
+                    textArea.select();
+                    const copied = document.execCommand('copy');
+                    textArea.remove();
+                    if (!copied) throw new Error('copy command failed');
+                }
+                alert(currentLanguage === 'ar' ? 'تم نسخ الرابط' : 'Link copied!');
+            } catch (error) {
+                console.error('تعذر مشاركة الرابط أو نسخه:', error);
+                alert(currentLanguage === 'ar' ? 'تعذر مشاركة الرابط' : 'Unable to share or copy the link.');
+            }
         }
 
         function toggleReportSection() {
