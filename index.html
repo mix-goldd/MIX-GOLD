@@ -7176,13 +7176,6 @@
                             <div class="select-dropdown">
                                 <div class="select-option" data-lang="en">English</div>
                                 <div class="select-option" data-lang="ar">العربية</div>
-                                <div class="select-option" data-lang="fr">Français</div>
-                                <div class="select-option" data-lang="es">Español</div>
-                                <div class="select-option" data-lang="it">Italiano</div>
-                                <div class="select-option" data-lang="ru">Русский</div>
-                                <div class="select-option" data-lang="zh">中文</div>
-                                <div class="select-option" data-lang="ja">日本語</div>
-                                <div class="select-option" data-lang="ko">한국어</div>
                             </div>
                         </div>
                     </div>
@@ -7467,7 +7460,7 @@
         }
 
         function getLanguageName(lang) {
-            const names = { en:'English', ar:'العربية', fr:'Français', es:'Español', it:'Italiano', ru:'Русский', zh:'中文', ja:'日本語', ko:'한국어' };
+            const names = { en:'English', ar:'العربية' };
             return names[lang] || 'English';
         }
 
