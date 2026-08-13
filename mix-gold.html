@@ -3890,8 +3890,8 @@
                             <div class="sort-dropdown">
                                 <div class="sort-option active" data-value="videos">Videos</div>
                                 <div class="sort-option" data-value="images">Images</div>
-                                <div class="sort-option" data-value="models">Models</div>
-                                <div class="sort-option" data-value="manga">Manga</div>
+                                <div class="sort-option" data-value="models">Stars</div>
+                                <div class="sort-option" data-value="manga">Anime</div>
                                 <div class="sort-option" data-value="manhwa">Manhwa</div>
                             </div>
                         </div>
@@ -4072,7 +4072,7 @@
             </div>
 
             <div class="models-section">
-                <div class="section-title"><i class="fas fa-star"></i> Models</div>
+                <div class="section-title"><i class="fas fa-star"></i> Stars</div>
                 <div class="models-flex" id="post-models-list">
                     <div class="model-card" data-model-name="Monet">
                         <img src="https://iili.io/2b0TTFe.jpg" alt="Monet">
@@ -4323,13 +4323,13 @@
                 appTitle: "MIX GOLD", gallery: "Gallery", saved: "Saved", settings: "Settings", home: "Home",
                 menu: "Menu", darkMode: "Dark Mode", language: "Language", general: "General",
                 developer: "Developer", galleryTeam: "MIX GOLD Team", noSavedImages: "No saved items",
-                models: "Models", noModels: "No models available",
+                models: "Stars", noModels: "No stars available",
                 relatedPosts: "Related Videos", modelStats: "Videos",
                 studios: "Studios", series: "Series", images: "PulseX",
                 showMore: "Show More", showLess: "Show Less",
                 videoCategories: "Video Categories", comicsMenu: "Comics", studioMenu: "Studio & Series",
                 mainMenu: "Main Menu", login: "Login",
-                manga: "Manga", manhwa: "Manhwa", notifications: "Notifications", watchHistory: "Watch History",
+                manga: "Anime", manhwa: "Manhwa", notifications: "Notifications", watchHistory: "Watch History",
                 subscribe: "Subscribe", subscribed: "Subscribed", noNotifications: "No notifications yet",
                 noWatchHistory: "No videos watched yet", clearHistory: "Clear History", seeAll: "See All", videos: "Videos",
                 account: "Account", logout: "Log Out",
@@ -4344,7 +4344,7 @@
                 postComment: "Post", loadingComments: "Loading...", loading: "Loading...",
                 chapter: "Chapter", chapters: "Chapters", noChapters: "No chapters yet", author: "Author",
                 status: "Status", ongoing: "Ongoing", completed: "Completed", startReading: "Start Reading",
-                noMangaAvailable: "No manga available yet", nextChapter: "Next Chapter", previousChapter: "Previous Chapter",
+                noMangaAvailable: "No Anime available yet", nextChapter: "Next Chapter", previousChapter: "Previous Chapter",
                 endOfChapter: "End of Chapter",
                 addToFavorite: "Add to Favorite", addedToFavorite: "Added to Favorites", summary: "Summary",
                 availableLanguages: "Available Languages", updateSchedule: "Update Schedule",
@@ -4356,13 +4356,13 @@
                 appTitle: "MIX GOLD", gallery: "المعرض", saved: "المحفوظات", settings: "الإعدادات", home: "الرئيسية",
                 menu: "القائمة", darkMode: "الوضع الداكن", language: "اللغة", general: "عام",
                 developer: "المطور", galleryTeam: "فريق MIX GOLD", noSavedImages: "لا توجد عناصر محفوظة",
-                models: "عارضات", noModels: "لا توجد عارضات",
+                models: "ممثلون", noModels: "لا يوجد ممثلون",
                 relatedPosts: "فيديوهات ذات صلة", modelStats: "فيديوهات",
                 studios: "استوديوهات", series: "سلاسل", images: "PulseX",
                 showMore: "عرض المزيد", showLess: "عرض أقل",
                 videoCategories: "فئات الفيديو", comicsMenu: "كوميكس", studioMenu: "استوديو وسلاسل",
                 mainMenu: "القائمة الرئيسية", login: "تسجيل الدخول",
-                manga: "مانجا", manhwa: "مانهوا", notifications: "الإشعارات", watchHistory: "سجل المشاهدة",
+                manga: "Anime", manhwa: "مانهوا", notifications: "الإشعارات", watchHistory: "سجل المشاهدة",
                 subscribe: "اشتراك", subscribed: "مُشترك", noNotifications: "لا توجد إشعارات بعد",
                 noWatchHistory: "لم تشاهد أي فيديو بعد", clearHistory: "مسح السجل", seeAll: "عرض الكل", videos: "فيديوهات",
                 account: "الحساب", logout: "تسجيل الخروج",
@@ -4377,7 +4377,7 @@
                 postComment: "نشر", loadingComments: "جارٍ التحميل...", loading: "جارٍ التحميل...",
                 chapter: "الفصل", chapters: "الفصول", noChapters: "لا توجد فصول بعد", author: "المؤلف",
                 status: "الحالة", ongoing: "مستمرة", completed: "مكتملة", startReading: "ابدأ القراءة",
-                noMangaAvailable: "لا توجد مانجا متاحة بعد", nextChapter: "الفصل التالي", previousChapter: "الفصل السابق",
+                noMangaAvailable: "لا يوجد Anime متاح بعد", nextChapter: "الفصل التالي", previousChapter: "الفصل السابق",
                 endOfChapter: "نهاية الفصل",
                 addToFavorite: "أضف للمفضلة", addedToFavorite: "أُضيفت للمفضلة", summary: "الملخص",
                 availableLanguages: "اللغات المتاحة", updateSchedule: "جدول التحديث",
@@ -5657,7 +5657,8 @@
         function setFilterType(type) {
             currentFilterType = type;
             const trigger = document.querySelector('#filter-type-select .sort-trigger span');
-            if (trigger) trigger.textContent = type.charAt(0).toUpperCase() + type.slice(1);
+            const filterLabels = { videos: 'Videos', images: 'PulseX', models: 'Stars', manga: 'Anime', manhwa: 'Manhwa' };
+            if (trigger) trigger.textContent = filterLabels[type] || type.charAt(0).toUpperCase() + type.slice(1);
             document.querySelectorAll('#filter-type-select .sort-option').forEach(opt => {
                 opt.classList.toggle('active', opt.dataset.value === type);
             });
@@ -5862,6 +5863,8 @@
             switch(sortType) {
                 case 'latest':
                     return sorted;
+                case 'title':
+                    return sorted.sort((a, b) => (a.title || a.name || '').localeCompare(b.title || b.name || ''));
                 case 'most_viewed':
                     return sorted.sort((a, b) => b.views - a.views);
                 case 'top_rated':
@@ -5888,12 +5891,9 @@
         }
 
         const VIDEO_SORT_OPTIONS = [
-            { value: 'latest', label: 'Latest' },
-            { value: 'most_viewed', label: 'Most Viewed' },
-            { value: 'top_rated', label: 'Top Rated' },
-            { value: 'longest', label: 'Longest' },
-            { value: 'most_favorited', label: 'Most Favorited' },
-            { value: 'random', label: 'Random Videos' }
+            { value: 'latest', label: 'Latest Addition', labelAr: 'آخر إضافة' },
+            { value: 'most_viewed', label: 'Most Viewed', labelAr: 'الأكثر مشاهدة' },
+            { value: 'title', label: 'Video Name', labelAr: 'اسم الفيديو' }
         ];
 
         const MODEL_SORT_OPTIONS = [
@@ -5906,9 +5906,10 @@
             const existing = document.getElementById(containerId);
             if (existing) existing.remove();
 
+            const getOptionLabel = (option) => currentLanguage === 'ar' ? (option.labelAr || option.label) : option.label;
             const getLabel = (value) => {
                 const found = options.find(o => o.value === value);
-                return found ? found.label : (options[0] ? options[0].label : '');
+                return found ? getOptionLabel(found) : (options[0] ? getOptionLabel(options[0]) : '');
             };
 
             const wrapper = document.createElement('div');
@@ -5926,11 +5927,11 @@
                 const optDiv = document.createElement('div');
                 optDiv.className = 'sort-option';
                 if (opt.value === currentValue) optDiv.classList.add('active');
-                optDiv.textContent = opt.label;
+                optDiv.textContent = getOptionLabel(opt);
                 optDiv.addEventListener('click', () => {
                     dropdown.classList.remove('show');
                     trigger.classList.remove('open');
-                    trigger.querySelector('span').textContent = opt.label;
+                    trigger.querySelector('span').textContent = getOptionLabel(opt);
                     if (onChangeCallback) onChangeCallback(opt.value);
                 });
                 dropdown.appendChild(optDiv);
@@ -6867,7 +6868,7 @@
             const tabOptions = [];
             if (savedVideos.length > 0) tabOptions.push({ value: 'videos', label: `Videos (${savedVideos.length})` });
             if (savedPureImages.length > 0) tabOptions.push({ value: 'images', label: `PulseX (${savedPureImages.length})` });
-            if (savedModelObjects.length > 0) tabOptions.push({ value: 'models', label: `Models (${savedModelObjects.length})` });
+            if (savedModelObjects.length > 0) tabOptions.push({ value: 'models', label: `${t('models')} (${savedModelObjects.length})` });
             if (savedManga.length > 0) tabOptions.push({ value: 'manga', label: `${t('manga')} (${savedManga.length})` });
             
             const selectDiv = document.createElement('div');
