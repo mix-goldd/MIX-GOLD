@@ -3758,6 +3758,23 @@
             display: block;
             pointer-events: none;
             transition: opacity 0.18s ease;
+            will-change: transform, opacity;
+        }
+        @keyframes manga-page-slide-from-right {
+            from { opacity: 0; transform: translate3d(100%, 0, 0); }
+            to { opacity: 1; transform: translate3d(0, 0, 0); }
+        }
+        @keyframes manga-page-slide-from-left {
+            from { opacity: 0; transform: translate3d(-100%, 0, 0); }
+            to { opacity: 1; transform: translate3d(0, 0, 0); }
+        }
+        @media (prefers-reduced-motion: no-preference) {
+            .manga-reader-viewport img.manga-page-slide-from-right {
+                animation: manga-page-slide-from-right 280ms cubic-bezier(0.23, 1, 0.32, 1) both;
+            }
+            .manga-reader-viewport img.manga-page-slide-from-left {
+                animation: manga-page-slide-from-left 280ms cubic-bezier(0.23, 1, 0.32, 1) both;
+            }
         }
         .manga-reader-tap-zone {
             position: absolute;
@@ -5952,7 +5969,7 @@
         const VIDEO_SORT_OPTIONS = [
             { value: 'latest', label: 'Latest Addition', labelAr: 'آخر إضافة' },
             { value: 'most_viewed', label: 'Most Viewed', labelAr: 'الأكثر مشاهدة' },
-            { value: 'title', label: 'Video Name', labelAr: 'اسم الفيديو' }
+            { value: 'top_rated', label: 'Top Rated (Likes)', labelAr: 'الأكثر تقييمًا (احتساب الإعجابات)' }
         ];
 
         const MODEL_SORT_OPTIONS = [
@@ -8103,11 +8120,21 @@
         updateMangaSettingsUI();
     }
 
-    function setMangaReaderImage(src, alt) {
+    function setMangaReaderImage(src, alt, transition = null) {
         const imgEl = document.getElementById('manga-reader-page-img');
         if (!imgEl) return;
+        imgEl.classList.remove('manga-page-slide-from-right', 'manga-page-slide-from-left');
         imgEl.style.opacity = '0';
-        imgEl.onload = () => { imgEl.style.opacity = '1'; };
+        imgEl.onload = () => {
+            imgEl.style.opacity = '1';
+            if (!transition) return;
+            const slideFromRight = transition === 'next'
+                ? mangaReaderDirection !== 'rtl'
+                : mangaReaderDirection === 'rtl';
+            const animationClass = slideFromRight ? 'manga-page-slide-from-right' : 'manga-page-slide-from-left';
+            imgEl.classList.add(animationClass);
+            imgEl.addEventListener('animationend', () => imgEl.classList.remove(animationClass), { once: true });
+        };
         imgEl.src = src;
         imgEl.alt = alt;
     }
@@ -8322,7 +8349,7 @@
         renderMangaLanguages(currentMangaPost);
 
         const startPage = typeof opts.startPage === 'number' ? opts.startPage : 0;
-        renderMangaReaderChapter(startPage, { pushState: opts.pushState });
+        renderMangaReaderChapter(startPage, { pushState: opts.pushState, transition: opts.transition });
     }
 
     // Renders the current chapter in either horizontal (single page + swipe/tap)
@@ -8363,7 +8390,11 @@
             if (counterEl) counterEl.style.display = 'block';
             const clamped = Math.max(0, Math.min(pageIndex, pages.length - 1));
             currentMangaPageIndex = clamped;
-            setMangaReaderImage(getMangaPageUrl(pages[clamped]), `${title} - ${t('chapter')} ${chapter.number} - ${clamped + 1}`);
+            setMangaReaderImage(
+                getMangaPageUrl(pages[clamped]),
+                `${title} - ${t('chapter')} ${chapter.number} - ${clamped + 1}`,
+                opts.transition || null
+            );
             if (counterEl) counterEl.textContent = `${clamped + 1} / ${pages.length}`;
         }
 
@@ -8387,28 +8418,28 @@
         document.title = `${title} - ${t('chapter')} ${chapter.number} | MIX GOLD`;
     }
 
-    function mangaReaderNextPage() {
-        if (!currentMangaPost || mangaReaderMode === 'vertical') return;
-        const chapter = currentMangaPost.chapters[currentMangaChapterIndex];
-        if (!chapter) return;
-        const pages = chapter.pages || [];
-        if (currentMangaPageIndex < pages.length - 1) {
-            renderMangaReaderChapter(currentMangaPageIndex + 1);
-        } else if (currentMangaChapterIndex < currentMangaPost.chapters.length - 1) {
-            openMangaChapter(currentMangaChapterIndex + 1, { startPage: 0 });
+        function mangaReaderNextPage() {
+            if (!currentMangaPost || mangaReaderMode === 'vertical') return;
+            const chapter = currentMangaPost.chapters[currentMangaChapterIndex];
+            if (!chapter) return;
+            const pages = chapter.pages || [];
+            if (currentMangaPageIndex < pages.length - 1) {
+                renderMangaReaderChapter(currentMangaPageIndex + 1, { transition: 'next' });
+            } else if (currentMangaChapterIndex < currentMangaPost.chapters.length - 1) {
+                openMangaChapter(currentMangaChapterIndex + 1, { startPage: 0, transition: 'next' });
+            }
         }
-    }
 
-    function mangaReaderPrevPage() {
-        if (!currentMangaPost || mangaReaderMode === 'vertical') return;
-        if (currentMangaPageIndex > 0) {
-            renderMangaReaderChapter(currentMangaPageIndex - 1);
-        } else if (currentMangaChapterIndex > 0) {
-            const prevChapter = currentMangaPost.chapters[currentMangaChapterIndex - 1];
-            const lastPage = (prevChapter && prevChapter.pages) ? prevChapter.pages.length - 1 : 0;
-            openMangaChapter(currentMangaChapterIndex - 1, { startPage: lastPage });
+        function mangaReaderPrevPage() {
+            if (!currentMangaPost || mangaReaderMode === 'vertical') return;
+            if (currentMangaPageIndex > 0) {
+                renderMangaReaderChapter(currentMangaPageIndex - 1, { transition: 'prev' });
+            } else if (currentMangaChapterIndex > 0) {
+                const prevChapter = currentMangaPost.chapters[currentMangaChapterIndex - 1];
+                const lastPage = (prevChapter && prevChapter.pages) ? prevChapter.pages.length - 1 : 0;
+                openMangaChapter(currentMangaChapterIndex - 1, { startPage: lastPage, transition: 'prev' });
+            }
         }
-    }
 
     function backFromMangaReader() {
         if (!currentMangaPost) { navigateTo('manga'); return; }
