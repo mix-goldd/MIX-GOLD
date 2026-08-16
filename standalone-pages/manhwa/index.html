@@ -408,6 +408,8 @@
         .menu-item.active {
             color: var(--primary-color);
             font-weight: bold;
+            background-color: rgba(255, 255, 255, 0.12);
+            border-radius: 14px;
         }
 
         .menu-item-locked {
@@ -6298,7 +6300,7 @@
 
             let html = `
                 <div class="menu-section">
-                    <a class="menu-item${navLockClass('home')}" href="https://mix-gold-mixgoldd100-6400s-projects.vercel.app/" onclick="if (isNavLocked('home')) { event.preventDefault(); showLockedNotice('home'); }">
+                    <a class="menu-item${navLockClass('home')}" data-page="home" href="https://mix-gold-mixgoldd100-6400s-projects.vercel.app/" onclick="if (isNavLocked('home')) { event.preventDefault(); showLockedNotice('home'); }">
                         <div class="menu-icon"><i class="fas fa-home"></i></div>
                         <div class="menu-text">${t('home')}</div>
                         ${navLockIcon('home')}
