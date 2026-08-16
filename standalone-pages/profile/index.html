@@ -4208,10 +4208,8 @@
                 </div>
             </div>
 
-            <div class="description-box">
-                <div class="desc-text" id="desc-text">
-                    A highly detailed, photorealistic image of a specialized armless wheelchair. This wheelchair is designed for maximum mobility and comfort. It features a lightweight carbon fiber frame, ergonomic seating, and advanced shock absorption. The user can control movement via a sophisticated joystick system. This model is perfect for those who require a reliable and stylish mobility solution. Additionally, the wheelchair comes with customizable colors and accessories. The armless design allows for easier transfer and a more natural posture. With a battery life of up to 20 miles, it's ideal for daily use. Safety features include anti-tip wheels and LED lights. The intuitive control panel makes it easy to navigate through various terrains. This is a top-of-the-line product for users seeking independence and style.
-                </div>
+            <div class="description-box" id="post-description-section" hidden>
+                <div class="desc-text" id="desc-text"></div>
                 <button class="desc-toggle-btn" id="desc-toggle-btn" onclick="toggleDescription()">
                     <span>Show More</span> <i class="fas fa-chevron-down"></i>
                 </button>
@@ -4699,6 +4697,7 @@
                         category: p.category, categories: (Array.isArray(p.categories) && p.categories.length) ? p.categories : (p.category ? [p.category] : []),
                         date: humanizeDate(p.created_at), duration: p.duration || '0:00',
                         likesPercentage: p.likes_percentage || '0%', views: p.views || 0,
+                        description: typeof p.description === 'string' ? p.description : '',
                         studio: p.studio || '', series: p.series || '', model_id: p.model_id || null
                     }));
                     if (videoPosts.length) characterData = videoPosts;
@@ -6933,6 +6932,21 @@
                 .join('');
         }
 
+        function renderPostDescription(video) {
+            const section = document.getElementById('post-description-section');
+            const text = document.getElementById('desc-text');
+            const toggle = document.getElementById('desc-toggle-btn');
+            if (!section || !text || !toggle) return;
+
+            const description = (video && typeof video.description === 'string')
+                ? video.description.trim()
+                : '';
+            section.hidden = !description;
+            text.classList.remove('expanded');
+            text.textContent = description;
+            toggle.innerHTML = `<span>${t('showMore')}</span> <i class="fas fa-chevron-down"></i>`;
+        }
+
         function renderPostModels(video) {
             const section = document.getElementById('post-models-section');
             const list = document.getElementById('post-models-list');
@@ -7924,6 +7938,7 @@
             renderSuggestedRelated(videoData);
             renderPostPublisherInfo(videoData);
             renderPostCategoryTags(videoData);
+            renderPostDescription(videoData);
             renderPostModels(videoData);
 
             (async () => {
