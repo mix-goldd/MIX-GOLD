@@ -4778,26 +4778,33 @@
             }
         }
 
-        async function openSavedStandalone() {
-            const savedUrl = 'https://mix-gold-jet-saved.vercel.app/';
+        async function openStandaloneWithSession(destinationUrl, destinationLabel) {
             try {
                 const { data: { session } } = await supabaseClient.auth.getSession();
                 if (!session?.access_token || !session?.refresh_token) {
-                    window.location.assign(savedUrl);
+                    window.location.assign(destinationUrl);
                     return;
                 }
                 const encodedSession = encodeAuthTransfer(session);
                 if (!encodedSession) {
-                    window.location.assign(savedUrl);
+                    window.location.assign(destinationUrl);
                     return;
                 }
-                const target = new URL(savedUrl);
+                const target = new URL(destinationUrl);
                 target.hash = new URLSearchParams({ [MIX_GOLD_AUTH_FRAGMENT_KEY]: encodedSession }).toString();
                 window.location.assign(target.toString());
             } catch (error) {
-                console.warn('تعذر نقل جلسة الدخول إلى صفحة الحفظ:', error);
-                window.location.assign(savedUrl);
+                console.warn(`تعذر نقل جلسة الدخول إلى ${destinationLabel}:`, error);
+                window.location.assign(destinationUrl);
             }
+        }
+
+        async function openSavedStandalone() {
+            await openStandaloneWithSession('https://mix-gold-jet-saved.vercel.app/', 'صفحة الحفظ');
+        }
+
+        async function openHomeStandalone() {
+            await openStandaloneWithSession('https://mix-gold-jet.vercel.app/', 'الصفحة الرئيسية');
         }
 
         async function restoreTransferredAuthSession() {
@@ -6299,7 +6306,7 @@
 
             let html = `
                 <div class="menu-section">
-                    <a class="menu-item${navLockClass('home')}" data-page="home" href="https://mix-gold-mixgoldd100-6400s-projects.vercel.app/" onclick="if (isNavLocked('home')) { event.preventDefault(); showLockedNotice('home'); }">
+                    <a class="menu-item${navLockClass('home')}" data-page="home" href="https://mix-gold-jet.vercel.app/" onclick="event.preventDefault(); if (isNavLocked('home')) { showLockedNotice('home'); } else { openHomeStandalone(); }">
                         <div class="menu-icon"><i class="fas fa-home"></i></div>
                         <div class="menu-text">${t('home')}</div>
                         ${navLockIcon('home')}
