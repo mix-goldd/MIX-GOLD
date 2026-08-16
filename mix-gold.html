@@ -9565,14 +9565,18 @@ function toggleSave(url, cardElement) {
       if (thumbsStrip) thumbsStrip.addEventListener('scroll', updateThumbsScrollbar);
       initMangaReaderSwipe();
 
-navigateTo(getDirectRoute().page);
-            const initialRoute = getDirectRoute();
+	            const initialRoute = getDirectRoute();
             const initialPost = initialRoute.post;
             const initialDl = initialRoute.dl;
             const initialImg = initialRoute.img;
             const initialManga = initialRoute.manga;
             const initialCh = initialRoute.ch;
             const initialPage = initialRoute.p;
+
+            // لا ننتقل إلى Home أولًا عند فتح رابط محتوى مباشر؛ navigateTo يمسح
+            // مسار /post من شريط العنوان قبل أن يتمكن openPostBySlug من استعادته.
+            const hasDirectContentRoute = Boolean(initialPost || initialDl || initialImg || initialManga);
+            if (!hasDirectContentRoute) navigateTo(initialRoute.page);
             if (initialPost) openPostBySlug(initialPost);
             else if (initialDl) openDownloadBySlug(initialDl);
             else if (initialImg) openImageById(initialImg);
