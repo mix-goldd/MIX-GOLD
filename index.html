@@ -4751,6 +4751,70 @@
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNxZnZyb3d5d3N6bGNtZ2ZremdjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM0NTI4NjgsImV4cCI6MjA5OTAyODg2OH0.e4i3wBOV3T42irXTRhpKr9cwjqtusYj_NHXkZpMBi5Q';
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+        // MIX GOLD navigation rule: keep a signed-in user logged in when moving to an independent Vercel page.
+        // The temporary token payload stays in the URL fragment only, never in the request or server logs.
+        const MIX_GOLD_AUTH_FRAGMENT_KEY = 'mixgold_auth';
+
+        function encodeAuthTransfer(session) {
+            try {
+                return btoa(unescape(encodeURIComponent(JSON.stringify({
+                    access_token: session.access_token,
+                    refresh_token: session.refresh_token
+                }))));
+            } catch (error) {
+                console.warn('تعذر تجهيز جلسة الدخول للانتقال:', error);
+                return null;
+            }
+        }
+
+        function decodeAuthTransfer(encodedSession) {
+            try {
+                return JSON.parse(decodeURIComponent(escape(atob(encodedSession))));
+            } catch (error) {
+                console.warn('تعذر قراءة جلسة الدخول المنقولة:', error);
+                return null;
+            }
+        }
+
+        async function openSavedStandalone() {
+            const savedUrl = 'https://mix-gold-jet-saved.vercel.app/';
+            try {
+                const { data: { session } } = await supabaseClient.auth.getSession();
+                if (!session?.access_token || !session?.refresh_token) {
+                    window.location.assign(savedUrl);
+                    return;
+                }
+                const encodedSession = encodeAuthTransfer(session);
+                if (!encodedSession) {
+                    window.location.assign(savedUrl);
+                    return;
+                }
+                const target = new URL(savedUrl);
+                target.hash = new URLSearchParams({ [MIX_GOLD_AUTH_FRAGMENT_KEY]: encodedSession }).toString();
+                window.location.assign(target.toString());
+            } catch (error) {
+                console.warn('تعذر نقل جلسة الدخول إلى صفحة الحفظ:', error);
+                window.location.assign(savedUrl);
+            }
+        }
+
+        async function restoreTransferredAuthSession() {
+            const params = new URLSearchParams(window.location.hash.slice(1));
+            const encodedSession = params.get(MIX_GOLD_AUTH_FRAGMENT_KEY);
+            if (!encodedSession) return;
+
+            try {
+                const session = decodeAuthTransfer(encodedSession);
+                if (!session?.access_token || !session?.refresh_token) return;
+                const { error } = await supabaseClient.auth.setSession(session);
+                if (error) console.warn('تعذر استعادة جلسة الدخول المنقولة:', error);
+            } catch (error) {
+                console.warn('تعذر استعادة جلسة الدخول المنقولة:', error);
+            } finally {
+                history.replaceState(null, document.title, window.location.pathname + window.location.search);
+            }
+        }
+
         const IMGBB_API_KEY = '1bb2dbe6951525e0b0256e8c79397f41';
 
         async function trackPostView(postId) {
@@ -5095,6 +5159,7 @@
         }
 
         async function checkUserSession() {
+            await restoreTransferredAuthSession();
             const { data: { session } } = await supabaseClient.auth.getSession();
             setLoggedIn(!!session);
             if (session) {
@@ -6312,7 +6377,7 @@
             html += `
                         </div>
                     </div>
-                    <a class="menu-item${navLockClass('saved')}" href="https://mix-gold-jet-saved.vercel.app/" onclick="if (isNavLocked('saved')) { event.preventDefault(); showLockedNotice('saved'); }">
+                    <a class="menu-item${navLockClass('saved')}" href="https://mix-gold-jet-saved.vercel.app/" onclick="event.preventDefault(); if (isNavLocked('saved')) { showLockedNotice('saved'); } else { openSavedStandalone(); }">
                         <div class="menu-icon"><i class="fas fa-bookmark"></i></div>
                         <div class="menu-text">${t('saved')}</div>
                         ${navLockIcon('saved')}
