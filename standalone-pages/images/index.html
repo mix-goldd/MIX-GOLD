@@ -1314,6 +1314,75 @@
 
         .post-detail.active { display: flex; }
 
+        .post-not-found {
+            display: none;
+            min-height: calc(100vh - 180px);
+            padding: 32px 16px;
+            align-items: center;
+            justify-content: center;
+            box-sizing: border-box;
+        }
+
+        .post-not-found.active { display: flex; }
+
+        .post-not-found-card {
+            width: min(100%, 520px);
+            padding: 36px 24px;
+            border: 1px solid color-mix(in srgb, var(--text-color) 16%, transparent);
+            border-radius: 20px;
+            background: var(--card-bg);
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.2);
+            text-align: center;
+        }
+
+        .post-not-found-icon {
+            width: 62px;
+            height: 62px;
+            margin: 0 auto 16px;
+            border-radius: 50%;
+            display: grid;
+            place-items: center;
+            background: color-mix(in srgb, var(--primary-color) 18%, transparent);
+            color: var(--primary-color);
+            font-size: 1.7rem;
+        }
+
+        .post-not-found-code {
+            margin: 0 0 4px;
+            color: var(--primary-color);
+            font-size: 2.5rem;
+            font-weight: 800;
+            line-height: 1;
+            letter-spacing: 0.04em;
+        }
+
+        .post-not-found-card h1 {
+            margin: 0;
+            color: var(--text-color);
+            font-size: 1.35rem;
+        }
+
+        .post-not-found-card p {
+            margin: 8px 0 24px;
+            color: color-mix(in srgb, var(--text-color) 72%, transparent);
+            line-height: 1.6;
+        }
+
+        .post-not-found-home-btn {
+            border: 0;
+            border-radius: 12px;
+            padding: 12px 18px;
+            background: var(--primary-color);
+            color: #fff;
+            font: inherit;
+            font-weight: 700;
+            cursor: pointer;
+            transition: transform 160ms cubic-bezier(0.23, 1, 0.32, 1), filter 160ms cubic-bezier(0.23, 1, 0.32, 1);
+        }
+
+        .post-not-found-home-btn:hover { filter: brightness(1.08); }
+        .post-not-found-home-btn:active { transform: scale(0.97); }
+
         .video-container {
             width: 100%;
             aspect-ratio: 16 / 9;
@@ -4208,6 +4277,16 @@
             </div>
         </div>
 
+        <section id="post-not-found" class="post-not-found" role="alert" aria-labelledby="post-not-found-title">
+            <div class="post-not-found-card">
+                <div class="post-not-found-icon" aria-hidden="true"><i class="fas fa-circle-exclamation"></i></div>
+                <div class="post-not-found-code">404</div>
+                <h1 id="post-not-found-title">المنشور غير متوفر</h1>
+                <p>هذا المنشور غير موجود أو لم يعد متاحًا.<br>This post is unavailable or no longer exists.</p>
+                <button class="post-not-found-home-btn" type="button" onclick="navigateTo('home')">العودة إلى الصفحة الرئيسية / Back to Home</button>
+            </div>
+        </section>
+
         <div id="download-detail" class="download-detail">
             <div class="pixiv-detail-nav">
                 <div class="pixiv-nav-back" onclick="backToPostFromDownload()"><i class="fas fa-chevron-left"></i></div>
@@ -6251,6 +6330,7 @@
         function navigateTo(page) {
             clearRouteParams();
             document.getElementById('post-detail').classList.remove('active');
+            document.getElementById('post-not-found').classList.remove('active');
             document.getElementById('model-detail').classList.remove('active');
             document.getElementById('image-detail-view').classList.remove('active');
             document.getElementById('login-view').classList.remove('active');
@@ -7869,6 +7949,7 @@
             }
 
             document.getElementById('image-detail-view').classList.remove('active');
+            document.getElementById('post-not-found').classList.remove('active');
             const mangaDetailElE = document.getElementById('manga-detail-view'); if (mangaDetailElE) mangaDetailElE.classList.remove('active');
             const mangaReaderElE = document.getElementById('manga-reader-view'); if (mangaReaderElE) mangaReaderElE.classList.remove('active');
             document.querySelectorAll('.container').forEach(c => c.classList.remove('active'));
@@ -8835,9 +8916,30 @@ function toggleSave(url, cardElement) {
         // showPostDetail() already expects, without it needing to be on screen.
         function openPostBySlug(slug) {
             const videoData = findVideoDataBySlug(slug);
-            if (!videoData) return false;
+            if (!videoData) {
+                showPostNotFound();
+                return true;
+            }
             showPostDetail(createImageCard(videoData));
             return true;
+        }
+
+        function showPostNotFound() {
+            document.querySelectorAll('.container').forEach(c => c.classList.remove('active'));
+            document.getElementById('post-detail').classList.remove('active');
+            document.getElementById('model-detail').classList.remove('active');
+            document.getElementById('image-detail-view').classList.remove('active');
+            document.getElementById('login-view').classList.remove('active');
+            const downloadDetail = document.getElementById('download-detail');
+            if (downloadDetail) downloadDetail.classList.remove('active');
+            const mangaDetail = document.getElementById('manga-detail-view');
+            if (mangaDetail) mangaDetail.classList.remove('active');
+            const mangaReader = document.getElementById('manga-reader-view');
+            if (mangaReader) mangaReader.classList.remove('active');
+            document.getElementById('post-not-found').classList.add('active');
+            currentPage = 'post-not-found';
+            updateSidebarActiveState('');
+            updateHeaderForPage('post-not-found', '404');
         }
 
         function showDownloadDetail(videoData, cardElement) {
