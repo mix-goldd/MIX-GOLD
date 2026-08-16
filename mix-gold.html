@@ -6377,7 +6377,7 @@
             html += `
                         </div>
                     </div>
-                    <a class="menu-item${navLockClass('saved')}" href="https://mix-gold-jet-saved.vercel.app/" onclick="event.preventDefault(); if (isNavLocked('saved')) { showLockedNotice('saved'); } else { openSavedStandalone(); }">
+                    <a class="menu-item${navLockClass('saved')}" data-page="saved" href="https://mix-gold-jet-saved.vercel.app/" onclick="event.preventDefault(); if (isNavLocked('saved')) { showLockedNotice('saved'); } else { openSavedStandalone(); }">
                         <div class="menu-icon"><i class="fas fa-bookmark"></i></div>
                         <div class="menu-text">${t('saved')}</div>
                         ${navLockIcon('saved')}
