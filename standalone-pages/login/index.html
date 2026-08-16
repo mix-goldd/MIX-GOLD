@@ -6426,9 +6426,12 @@
                     </a>
                 </div>`;
             
-            sidebarMenu.innerHTML = html;
-            rebuildVideoCategories();
-        }
+	            sidebarMenu.innerHTML = html;
+	            rebuildVideoCategories();
+	            // يمكن أن تعيد المصادقة أو تغيير اللغة بناء القائمة بعد الانتقال؛
+	            // لذا نعيد تطبيق التحديد على العنصر الملائم للصفحة الحالية دائماً.
+	            updateSidebarActiveState(currentPage);
+	        }
 
         function rebuildVideoCategories() {
             const categories = getVideoCategories();
