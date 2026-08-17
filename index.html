@@ -123,6 +123,12 @@
             pointer-events: none;
         }
 
+        @media (max-width: 480px) {
+            .header-page-title {
+                font-size: var(--header-page-title-font-size, 0.9rem);
+            }
+        }
+
         .header-controls {
             display: flex;
             gap: 10px;
@@ -6418,6 +6424,7 @@
                 titleEl.style.display = 'block';
                 titleEl.textContent = customTitle || getPageTitle(page);
                 fitHeaderPageTitle();
+                requestAnimationFrame(() => requestAnimationFrame(fitHeaderPageTitle));
             }
         }
 
@@ -6427,19 +6434,23 @@
             if (!titleEl || !header || !titleEl.textContent.trim()) return;
 
             titleEl.style.removeProperty('--header-page-title-font-size');
-            const baseFontSize = parseFloat(window.getComputedStyle(titleEl).fontSize) || 17.6;
+            const isCompactScreen = window.matchMedia('(max-width: 480px)').matches;
+            const baseFontSize = isCompactScreen
+                ? 14.4
+                : (parseFloat(window.getComputedStyle(titleEl).fontSize) || 17.6);
             const menuWidth = header.querySelector('.menu-toggle')?.offsetWidth || 0;
             const searchWidth = header.querySelector('.header-controls')?.offsetWidth || 0;
-            const controlGap = window.matchMedia('(max-width: 480px)').matches ? 26 : 44;
-            const availableWidth = Math.max(136, header.clientWidth - menuWidth - searchWidth - controlGap);
+            const controlGap = isCompactScreen ? 46 : 44;
+            const availableWidth = Math.max(120, header.clientWidth - menuWidth - searchWidth - controlGap);
 
-            titleEl.style.setProperty('--header-page-title-max-width', `${Math.floor(availableWidth)}px`);
+            titleEl.style.setProperty('--header-page-title-max-width', 'none');
             const naturalWidth = titleEl.scrollWidth;
-            const minimumFontSize = window.matchMedia('(max-width: 480px)').matches ? 8 : 13;
+            const minimumFontSize = isCompactScreen ? 7.5 : 13;
             const fittedFontSize = naturalWidth > availableWidth
                 ? Math.max(minimumFontSize, Math.round((baseFontSize * availableWidth / naturalWidth) * 10) / 10)
                 : baseFontSize;
 
+            titleEl.style.setProperty('--header-page-title-max-width', `${Math.floor(availableWidth)}px`);
             titleEl.style.setProperty('--header-page-title-font-size', `${fittedFontSize}px`);
             titleEl.classList.toggle('header-title-fitted', fittedFontSize < baseFontSize);
         }
