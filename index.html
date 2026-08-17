@@ -121,11 +121,23 @@
             line-height: 1.2;
             transition: font-size 0.18s cubic-bezier(0.23, 1, 0.32, 1);
             pointer-events: none;
+            unicode-bidi: plaintext;
+        }
+
+        .header-title-episode {
+            unicode-bidi: isolate;
         }
 
         @media (max-width: 480px) {
             .header-page-title {
-                font-size: var(--header-page-title-font-size, 1rem);
+                /* يظل العنوان الطويل مقروءًا ويظهر كاملًا بين أزرار الترويسة. */
+                max-width: var(--header-page-title-max-width, 58%);
+                font-size: var(--header-page-title-font-size, 0.9375rem);
+                line-height: 1.18;
+                white-space: normal;
+                overflow: visible;
+                text-overflow: clip;
+                text-align: center;
             }
         }
 
@@ -6422,7 +6434,21 @@
             } else {
                 logo.style.display = 'none';
                 titleEl.style.display = 'block';
-                titleEl.textContent = customTitle || getPageTitle(page);
+                const headerTitle = customTitle || getPageTitle(page);
+                const episodeMatch = String(headerTitle).trim().match(/^(.*?)(?:\s+)((?:الحلقة|حلقة)\s+\d+|(?:episode|ep\.)\s+\d+)$/i);
+                titleEl.replaceChildren();
+                if (episodeMatch) {
+                    const workSpan = document.createElement('span');
+                    workSpan.className = 'header-title-work';
+                    workSpan.textContent = episodeMatch[1].trim();
+                    const episodeSpan = document.createElement('span');
+                    episodeSpan.className = 'header-title-episode';
+                    episodeSpan.dir = /[\u0600-\u06FF]/.test(episodeMatch[2]) ? 'rtl' : 'ltr';
+                    episodeSpan.textContent = episodeMatch[2];
+                    titleEl.append(workSpan, document.createTextNode(' '), episodeSpan);
+                } else {
+                    titleEl.textContent = headerTitle;
+                }
                 fitHeaderPageTitle();
                 requestAnimationFrame(() => requestAnimationFrame(fitHeaderPageTitle));
             }
@@ -6436,18 +6462,20 @@
             titleEl.style.removeProperty('--header-page-title-font-size');
             const isCompactScreen = window.matchMedia('(max-width: 480px)').matches;
             const baseFontSize = isCompactScreen
-                ? 16
+                ? 15
                 : (parseFloat(window.getComputedStyle(titleEl).fontSize) || 17.6);
             const menuWidth = header.querySelector('.menu-toggle')?.offsetWidth || 0;
             const searchWidth = header.querySelector('.header-controls')?.offsetWidth || 0;
-            const controlGap = isCompactScreen ? 20 : 44;
+            const controlGap = isCompactScreen ? 12 : 44;
             const availableWidth = Math.max(120, header.clientWidth - menuWidth - searchWidth - controlGap);
 
             titleEl.style.setProperty('--header-page-title-max-width', 'none');
             const naturalWidth = titleEl.scrollWidth;
-            const minimumFontSize = isCompactScreen ? 16 : 13;
+            const minimumFontSize = isCompactScreen ? 13 : 13;
             const fittedFontSize = isCompactScreen
-                ? baseFontSize
+                ? naturalWidth > availableWidth
+                    ? Math.max(minimumFontSize, Math.round((baseFontSize * availableWidth / naturalWidth) * 10) / 10)
+                    : baseFontSize
                 : naturalWidth > availableWidth
                 ? Math.max(minimumFontSize, Math.round((baseFontSize * availableWidth / naturalWidth) * 10) / 10)
                 : baseFontSize;
@@ -8160,7 +8188,9 @@
             document.querySelectorAll('.container').forEach(c => c.classList.remove('active'));
             document.getElementById('post-detail').classList.add('active');
 
-            const title = cardElement.querySelector('.post-title')?.textContent || cardElement.dataset.name || '';
+            const titleMain = cardElement.querySelector('.post-title-main')?.textContent?.trim() || '';
+            const episodeTitle = cardElement.querySelector('.post-title-episode')?.textContent?.trim() || '';
+            const title = [titleMain, episodeTitle].filter(Boolean).join(' ') || cardElement.dataset.name || '';
             updateHeaderForPage('post-detail', title);
         }
 
