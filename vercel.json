@@ -1,7 +1,8 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "rewrites": [
-    { "source": "/post/:path*", "destination": "/index.html" },
+    { "source": "/post/:slug", "destination": "/api/post-preview?slug=:slug" },
+    { "source": "/post/:path*", "destination": "/api/post-preview?slug=:path*" },
     { "source": "/download/:path*", "destination": "/index.html" },
     { "source": "/manga/:path*", "destination": "/index.html" }
   ]
