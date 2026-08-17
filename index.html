@@ -4540,6 +4540,7 @@
     </footer>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.js"></script>
     <script>
         const translations = {
@@ -5650,15 +5651,84 @@
             await completeAuthSuccess();
         }
 
-        async function modalLoginWithGoogle() {
-            persistPendingAuthForRedirect();
+        const GOOGLE_WEB_CLIENT_ID = '162387244484-4u97bc2fnab7l3q79g1fouqntjirk69j.apps.googleusercontent.com';
+        let googleIdentityInitialized = false;
+        let googleIdentityLoadPromise = null;
+
+        function getGoogleIdentityServices() {
+            if (window.google?.accounts?.id) return Promise.resolve(window.google.accounts.id);
+            if (googleIdentityLoadPromise) return googleIdentityLoadPromise;
+
+            googleIdentityLoadPromise = new Promise((resolve, reject) => {
+                const existingScript = document.querySelector('script[src^="https://accounts.google.com/gsi/client"]');
+                const script = existingScript || document.createElement('script');
+                const finishLoading = () => window.google?.accounts?.id
+                    ? resolve(window.google.accounts.id)
+                    : reject(new Error('تعذر تهيئة خدمة تسجيل الدخول من Google.'));
+
+                script.addEventListener('load', finishLoading, { once: true });
+                script.addEventListener('error', () => reject(new Error('تعذر تحميل خدمة تسجيل الدخول من Google.')), { once: true });
+                if (!existingScript) {
+                    script.src = 'https://accounts.google.com/gsi/client';
+                    script.async = true;
+                    script.defer = true;
+                    document.head.appendChild(script);
+                }
+                window.setTimeout(finishLoading, 4000);
+            });
+            return googleIdentityLoadPromise;
+        }
+
+        async function handleGoogleCredential(response) {
+            if (!response?.credential) {
+                alert('لم ترسل Google بيانات تسجيل الدخول. حاول مرة أخرى.');
+                return;
+            }
+            const { error } = await supabaseClient.auth.signInWithIdToken({
+                provider: 'google',
+                token: response.credential
+            });
+            if (error) {
+                alert('خطأ في تسجيل الدخول بجوجل: ' + error.message);
+                return;
+            }
+            await completeAuthSuccess();
+        }
+
+        async function continueWithGoogleOAuthRedirect() {
             const { error } = await supabaseClient.auth.signInWithOAuth({
                 provider: 'google',
                 options: { redirectTo: window.location.origin }
             });
-            if (error) {
-                alert('خطأ في تسجيل الدخول بجوجل: ' + error.message);
+            if (error) alert('خطأ في تسجيل الدخول بجوجل: ' + error.message);
+        }
+
+        async function loginWithGoogleOnDevice() {
+            persistPendingAuthForRedirect();
+            try {
+                const identity = await getGoogleIdentityServices();
+                if (!googleIdentityInitialized) {
+                    identity.initialize({
+                        client_id: GOOGLE_WEB_CLIENT_ID,
+                        callback: handleGoogleCredential,
+                        auto_select: false,
+                        use_fedcm_for_prompt: true
+                    });
+                    googleIdentityInitialized = true;
+                }
+                identity.prompt((notification) => {
+                    if (notification.isNotDisplayed?.() || notification.isSkippedMoment?.()) {
+                        continueWithGoogleOAuthRedirect();
+                    }
+                });
+            } catch (error) {
+                console.warn('Google Identity Services unavailable; using the redirect fallback.', error);
+                await continueWithGoogleOAuthRedirect();
             }
+        }
+
+        async function modalLoginWithGoogle() {
+            await loginWithGoogleOnDevice();
         }
 
         async function modalRegisterUser() {
@@ -9855,12 +9925,7 @@ function toggleSave(url, cardElement) {
         }
 
         async function loginWithGoogle() {
-            persistPendingAuthForRedirect();
-            const { error } = await supabaseClient.auth.signInWithOAuth({
-                provider: 'google',
-                options: { redirectTo: window.location.origin }
-            });
-            if (error) alert('خطأ في تسجيل الدخول بجوجل: ' + error.message);
+            await loginWithGoogleOnDevice();
         }
 
         async function standardLogin() {
