@@ -7203,11 +7203,14 @@
                 models = models.filter(m => m.name.toLowerCase().includes(currentSearchTerm.toLowerCase()));
             }
 
-            let showVideos = true;
-            let showImages = true;
-            let showModels = true;
-            let showManga = true;
-            let showManhwa = true;
+            // Keep the Home feed aligned with the sidebar: a locked section is
+            // still visible in navigation with its lock notice, but none of its
+            // content cards are exposed on the homepage.
+            let showVideos = !isNavLocked('video');
+            let showImages = !isNavLocked('pulsex');
+            let showModels = !isNavLocked('models');
+            let showManga = !isNavLocked('comics');
+            let showManhwa = !isNavLocked('comics');
 
             if (showVideos) {
                 const sorted = advancedSortVideos(videos, currentAdvancedSort);
