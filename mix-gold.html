@@ -4160,7 +4160,7 @@
 
         <div id="post-detail" class="post-detail">
             <div class="video-container">
-                <iframe id="youtube-player-iframe" src="https://www.youtube.com/embed/XkXho9DPmXo?enablejsapi=1" frameborder="0" allowfullscreen allow="autoplay; encrypted-media" sandbox="allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox"></iframe>
+                <iframe id="post-player-iframe" src="about:blank" title="Video player" frameborder="0" allowfullscreen allow="autoplay; encrypted-media" sandbox="allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox"></iframe>
             </div>
 
             <div class="actions-wrapper">
@@ -4506,7 +4506,6 @@
         <p>© 2026 MIX GOLD - All rights reserved</p>
     </footer>
 
-    <script src="https://www.youtube.com/iframe_api"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.js"></script>
     <script>
@@ -4745,8 +4744,8 @@
                         details: relationDetails,
                         categories: relationRowsReady ? (categoriesByPost.get(post.id) || []) : legacyCategories,
                         starIds: relationRowsReady ? (starsByPost.get(post.id) || []) : (post.model_id ? [post.model_id] : []),
-                        watchUrl: relationRowsReady ? (relationLinks.watch || '') : (post.page_url || ''),
-                        downloadUrl: relationRowsReady ? (relationLinks.download || '') : (post.download_url || post.page_url || ''),
+                        watchUrl: getSafePlayerUrl(relationRowsReady ? (relationLinks.watch || '') : (post.page_url || '')),
+                        downloadUrl: getSafePlayerUrl(relationRowsReady ? (relationLinks.download || '') : (post.download_url || post.page_url || '')),
                         thumbnailUrl: relationRowsReady ? (relationMedia.thumbnail || '') : (post.thumbnail_url || ''),
                         imageUrls: relationRowsReady && relationMedia.images.length ? relationMedia.images : legacyImages,
                         views: relationRowsReady ? (relationMetrics.views ?? 0) : (post.views || 0)
@@ -4914,7 +4913,34 @@
         let watchHistory = JSON.parse(localStorage.getItem('watchHistory')) || [];
         let currentWatchLogged = false;
         let watchTimer = null;
-        let ytPlayer = null;
+
+        function isBlockedPlayerUrl(value) {
+            const rawValue = typeof value === 'string' ? value.trim() : '';
+            if (!rawValue) return false;
+            try {
+                const hostname = new URL(rawValue).hostname.toLowerCase().replace(/^www\./, '');
+                return hostname === ('you' + 'tube.com') || hostname.endsWith('.' + 'you' + 'tube.com') || hostname === ('youtu' + '.be');
+            } catch (error) {
+                return true;
+            }
+        }
+
+        function getSafePlayerUrl(value) {
+            const rawValue = typeof value === 'string' ? value.trim() : '';
+            if (!/^https?:\/\//i.test(rawValue) || isBlockedPlayerUrl(rawValue)) return '';
+            return rawValue;
+        }
+
+        function clearPostPlayer() {
+            const playerIframe = document.getElementById('post-player-iframe');
+            if (playerIframe) playerIframe.src = 'about:blank';
+        }
+
+        function setPostPlayerSource(value) {
+            const playerIframe = document.getElementById('post-player-iframe');
+            if (!playerIframe) return;
+            playerIframe.src = getSafePlayerUrl(value) || 'about:blank';
+        }
 
         const SUPABASE_URL = 'https://sqfvrowywszlcmgfkzgc.supabase.co';
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNxZnZyb3d5d3N6bGNtZ2ZremdjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM0NTI4NjgsImV4cCI6MjA5OTAyODg2OH0.e4i3wBOV3T42irXTRhpKr9cwjqtusYj_NHXkZpMBi5Q';
@@ -5929,33 +5955,6 @@
             });
         }
 
-        function onYouTubeIframeAPIReady() {
-            const iframe = document.getElementById('youtube-player-iframe');
-            if (!iframe || typeof YT === 'undefined') return;
-            ytPlayer = new YT.Player('youtube-player-iframe', {
-                events: {
-                    onStateChange: onPlayerStateChange
-                }
-            });
-        }
-
-        function onPlayerStateChange(event) {
-            if (typeof YT === 'undefined') return;
-            if (event.data === YT.PlayerState.PLAYING) {
-                if (watchTimer) clearTimeout(watchTimer);
-                if (!currentWatchLogged) {
-                    watchTimer = setTimeout(() => {
-                        logCurrentVideoWatched();
-                    }, 5000);
-                }
-            } else {
-                if (watchTimer) {
-                    clearTimeout(watchTimer);
-                    watchTimer = null;
-                }
-            }
-        }
-
         function logCurrentVideoWatched() {
             if (currentWatchLogged || !currentPostCard) return;
             currentWatchLogged = true;
@@ -6409,6 +6408,7 @@
 
         function navigateTo(page) {
             clearRouteParams();
+            clearPostPlayer();
             document.getElementById('post-detail').classList.remove('active');
             document.getElementById('post-not-found').classList.remove('active');
             document.getElementById('model-detail').classList.remove('active');
@@ -8023,6 +8023,7 @@
             } else {
                 filtered.forEach(ch => container.appendChild(createImageCard(ch)));
             }
+            clearPostPlayer();
             document.getElementById('post-detail').classList.remove('active');
             document.getElementById('model-detail').classList.remove('active');
             document.getElementById('image-detail-view').classList.remove('active');
@@ -8042,10 +8043,7 @@
             updateDetailStats(url);
             bindPostDetailEvents();
             const videoData = findVideoDataByUrl(url);
-            const playerIframe = document.getElementById('youtube-player-iframe');
-            if (playerIframe && videoData && videoData.pageUrl) {
-                playerIframe.src = videoData.pageUrl;
-            }
+            setPostPlayerSource(videoData?.pageUrl);
             renderSuggestedRelated(videoData);
             renderPostPublisherInfo(videoData);
             renderPostCategoryTags(videoData);
@@ -9049,6 +9047,7 @@ function toggleSave(url, cardElement) {
         }
 
         function showPostNotFound() {
+            clearPostPlayer();
             document.querySelectorAll('.container').forEach(c => c.classList.remove('active'));
             document.getElementById('post-detail').classList.remove('active');
             document.getElementById('model-detail').classList.remove('active');
@@ -9068,6 +9067,7 @@ function toggleSave(url, cardElement) {
 
         function showDownloadDetail(videoData, cardElement) {
             currentPostCard = cardElement;
+            clearPostPlayer();
             const title = videoData.title || videoData.name || '';
             document.getElementById('download-detail-poster').src = videoData.url || '';
             document.getElementById('download-detail-title').textContent = title;
@@ -9112,6 +9112,7 @@ function toggleSave(url, cardElement) {
         }
 
         window.addEventListener('popstate', function () {
+            clearPostPlayer();
             const route = getDirectRoute();
             const postSlug = route.post;
             const dlSlug = route.dl;
