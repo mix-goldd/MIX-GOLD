@@ -1,6 +1,8 @@
 const SUPABASE_URL = "https://sqfvrowywszlcmgfkzgc.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNxZnZyb3d5d3N6bGNtZ2ZremdjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM0NTI4NjgsImV4cCI6MjA5OTAyODg2OH0.e4i3wBOV3T42irXTRhpKr9cwjqtusYj_NHXkZpMBi5Q";
 const DEFAULT_IMAGE = "https://mix-gold-jet.vercel.app/manus-storage/mix-gold-logo_310bd072.png";
+const SHARE_IMAGE_WIDTH = 1200;
+const SHARE_IMAGE_HEIGHT = 675;
 
 export function sanitizeSlug(value) {
   const slug = Array.isArray(value) ? value[0] : value;
@@ -53,10 +55,21 @@ export function getPreviewImage(post, media = []) {
   return candidates.find((value) => typeof value === "string" && /^https?:\/\//i.test(value.trim()))?.trim() || DEFAULT_IMAGE;
 }
 
+export function getShareImage(image) {
+  const source = typeof image === "string" && /^https?:\/\//i.test(image.trim()) ? image.trim() : DEFAULT_IMAGE;
+  const imageUrl = new URL("https://wsrv.nl/");
+  imageUrl.searchParams.set("url", source);
+  imageUrl.searchParams.set("w", String(SHARE_IMAGE_WIDTH));
+  imageUrl.searchParams.set("h", String(SHARE_IMAGE_HEIGHT));
+  imageUrl.searchParams.set("fit", "cover");
+  imageUrl.searchParams.set("output", "jpg");
+  return imageUrl.toString();
+}
+
 export function buildPreviewHtml(pageHtml, { title, description, image, canonicalUrl, category }) {
   const safeTitle = escapeHtml(normalizeText(title, "MIX GOLD"));
   const safeDescription = escapeHtml(normalizeText(description, "Discover this post on MIX GOLD."));
-  const safeImage = escapeHtml(image || DEFAULT_IMAGE);
+  const safeImage = escapeHtml(getShareImage(image));
   const safeCanonicalUrl = escapeHtml(canonicalUrl);
   const safeCategory = escapeHtml(normalizeText(category));
   const metadata = [
@@ -68,6 +81,10 @@ export function buildPreviewHtml(pageHtml, { title, description, image, canonica
     `<meta property="og:description" content="${safeDescription}">`,
     `<meta property="og:url" content="${safeCanonicalUrl}">`,
     `<meta property="og:image" content="${safeImage}">`,
+    `<meta property="og:image:secure_url" content="${safeImage}">`,
+    `<meta property="og:image:type" content="image/jpeg">`,
+    `<meta property="og:image:width" content="${SHARE_IMAGE_WIDTH}">`,
+    `<meta property="og:image:height" content="${SHARE_IMAGE_HEIGHT}">`,
     `<meta property="og:image:alt" content="${safeTitle}">`,
     ...(safeCategory ? [`<meta property="article:section" content="${safeCategory}">`] : []),
     `<meta name="twitter:card" content="summary_large_image">`,
