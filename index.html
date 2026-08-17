@@ -110,14 +110,16 @@
             position: absolute;
             left: 50%;
             transform: translateX(-50%);
-            font-size: 1.1rem;
+            font-size: var(--header-page-title-font-size, 1.1rem);
             font-weight: 700;
             color: var(--text-color);
             display: none;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
-            max-width: 55%;
+            max-width: var(--header-page-title-max-width, 55%);
+            line-height: 1.2;
+            transition: font-size 0.18s cubic-bezier(0.23, 1, 0.32, 1);
             pointer-events: none;
         }
 
@@ -6409,12 +6411,40 @@
                 logo.style.display = 'block';
                 titleEl.style.display = 'none';
                 titleEl.textContent = '';
+                titleEl.style.removeProperty('--header-page-title-font-size');
+                titleEl.style.removeProperty('--header-page-title-max-width');
             } else {
                 logo.style.display = 'none';
                 titleEl.style.display = 'block';
                 titleEl.textContent = customTitle || getPageTitle(page);
+                fitHeaderPageTitle();
             }
         }
+
+        function fitHeaderPageTitle() {
+            const titleEl = document.getElementById('header-page-title');
+            const header = titleEl?.closest('header');
+            if (!titleEl || !header || !titleEl.textContent.trim()) return;
+
+            titleEl.style.removeProperty('--header-page-title-font-size');
+            const baseFontSize = parseFloat(window.getComputedStyle(titleEl).fontSize) || 17.6;
+            const menuWidth = header.querySelector('.menu-toggle')?.offsetWidth || 0;
+            const searchWidth = header.querySelector('.header-controls')?.offsetWidth || 0;
+            const controlGap = window.matchMedia('(max-width: 480px)').matches ? 26 : 44;
+            const availableWidth = Math.max(136, header.clientWidth - menuWidth - searchWidth - controlGap);
+
+            titleEl.style.setProperty('--header-page-title-max-width', `${Math.floor(availableWidth)}px`);
+            const naturalWidth = titleEl.scrollWidth;
+            const minimumFontSize = window.matchMedia('(max-width: 480px)').matches ? 8 : 13;
+            const fittedFontSize = naturalWidth > availableWidth
+                ? Math.max(minimumFontSize, Math.round((baseFontSize * availableWidth / naturalWidth) * 10) / 10)
+                : baseFontSize;
+
+            titleEl.style.setProperty('--header-page-title-font-size', `${fittedFontSize}px`);
+            titleEl.classList.toggle('header-title-fitted', fittedFontSize < baseFontSize);
+        }
+
+        window.addEventListener('resize', fitHeaderPageTitle);
 
         function pageHistoryPath(page) {
             return page === 'home' ? '/' : `/?page=${encodeURIComponent(page)}`;
