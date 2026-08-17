@@ -31,6 +31,20 @@ export function parseImageList(value) {
   }
 }
 
+export function slugFromPostKey(value) {
+  const key = String(value || "");
+  let hash = 5381;
+  for (let index = 0; index < key.length; index += 1) {
+    hash = ((hash << 5) + hash) + key.charCodeAt(index);
+    hash |= 0;
+  }
+  return (hash >>> 0).toString(36);
+}
+
+export function findPostBySlug(posts, slug) {
+  return posts.find((post) => post?.id === slug || slugFromPostKey(post?.id || post?.page_url) === slug || slugFromPostKey(post?.page_url) === slug) || null;
+}
+
 export function getPreviewImage(post, media = []) {
   const imageMedia = media
     .filter((item) => item?.media_kind === "thumbnail" || item?.media_kind === "image")
@@ -81,20 +95,19 @@ async function fetchJson(pathname, params) {
 }
 
 async function getPostPreviewData(slug) {
-  const [posts, media] = await Promise.all([
-    fetchJson("posts", {
-      select: "id,title,description,thumbnail_url,images,category",
-      id: `eq.${slug}`,
-      limit: "1",
-    }),
-    fetchJson("post_media", {
-      select: "url,media_kind,sort_order",
-      post_id: `eq.${slug}`,
-      order: "sort_order.asc",
-    }),
-  ]);
-  const post = posts[0];
-  return post ? { post, media } : null;
+  const posts = await fetchJson("posts", {
+    select: "id,title,description,thumbnail_url,images,category,page_url",
+    order: "created_at.desc",
+    limit: "1000",
+  });
+  const post = findPostBySlug(posts, slug);
+  if (!post) return null;
+  const media = await fetchJson("post_media", {
+    select: "url,media_kind,sort_order",
+    post_id: `eq.${post.id}`,
+    order: "sort_order.asc",
+  });
+  return { post, media };
 }
 
 function requestOrigin(request) {
