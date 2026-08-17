@@ -1,5 +1,5 @@
 import { readFileSync } from "node:fs";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 const source = readFileSync(new URL("../client/index.html", import.meta.url), "utf8");
 const vercelConfig = JSON.parse(readFileSync(new URL("../vercel.json", import.meta.url), "utf8"));
@@ -114,5 +114,30 @@ describe("حالة القائمة الجانبية", () => {
     expect(source).toContain('class="post-title-episode"');
     expect(source).toContain("flex: 0 0 auto;");
     expect(source).toContain("font-size: 0.9rem;");
+  });
+
+  it("يعرض الوقت والتاريخ وفق لغة الواجهة المختارة ويعيد بناء العناصر الزمنية", () => {
+    expect(source).toContain("const isArabic = currentLanguage === 'ar';");
+    expect(source).toContain("return isArabic ? 'الآن' : 'Just now';");
+    expect(source).toContain("function getLocalizedDateLabel(item)");
+    expect(source).toContain("${getLocalizedDateLabel(character)}");
+    expect(source).toContain("createdAt: p.created_at");
+    expect(source).toContain("function timeAgo(timestamp) {\n            return humanizeDate(timestamp);");
+    expect(source).toContain("else if (currentPage === 'notifications') renderNotifications();");
+    expect(source).toContain("else if (currentPage === 'watch-history') renderWatchHistory();");
+    expect(source).toContain("renderCommentsList();");
+  });
+
+  it("يصوغ الوقت النسبي فعليًا بالعربية أو الإنجليزية وفق اللغة المختارة", () => {
+    const match = source.match(/function humanizeDate\(value\) \{[\s\S]*?\n        \}\n\n        function getLocalizedDateLabel/);
+    expect(match).not.toBeNull();
+    const formatterSource = match![0].replace(/\n\n        function getLocalizedDateLabel$/, "");
+    const createFormatter = new Function("currentLanguage", `${formatterSource}\nreturn humanizeDate;`) as (language: string) => (value: number) => string;
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-08-17T12:00:00.000Z"));
+    const tenHoursEarlier = new Date("2026-08-17T02:00:00.000Z").getTime();
+    expect(createFormatter("en")(tenHoursEarlier)).toBe("10 hours ago");
+    expect(createFormatter("ar")(tenHoursEarlier)).toBe("منذ 10 ساعة");
+    vi.useRealTimers();
   });
 });

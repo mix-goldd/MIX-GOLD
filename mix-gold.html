@@ -4657,19 +4657,28 @@
         let cachedHomepageSections = null;
         let cachedNavLocks = null;
 
-        function humanizeDate(iso) {
-            if (!iso) return '';
-            const diffMs = Date.now() - new Date(iso).getTime();
+        function humanizeDate(value) {
+            if (value === null || value === undefined || value === '') return '';
+            const timestamp = typeof value === 'number' ? value : new Date(value).getTime();
+            if (!Number.isFinite(timestamp)) return '';
+
+            const diffMs = Math.max(0, Date.now() - timestamp);
             const mins = Math.floor(diffMs / 60000);
-            if (mins < 1) return 'الآن';
-            if (mins < 60) return `منذ ${mins} دقيقة`;
+            const isArabic = currentLanguage === 'ar';
+            if (mins < 1) return isArabic ? 'الآن' : 'Just now';
+            if (mins < 60) return isArabic ? `منذ ${mins} دقيقة` : `${mins} ${mins === 1 ? 'minute' : 'minutes'} ago`;
             const hours = Math.floor(mins / 60);
-            if (hours < 24) return `منذ ${hours} ساعة`;
+            if (hours < 24) return isArabic ? `منذ ${hours} ساعة` : `${hours} ${hours === 1 ? 'hour' : 'hours'} ago`;
             const days = Math.floor(hours / 24);
-            if (days < 30) return `منذ ${days} يوم`;
+            if (days < 30) return isArabic ? `منذ ${days} يوم` : `${days} ${days === 1 ? 'day' : 'days'} ago`;
             const months = Math.floor(days / 30);
-            if (months < 12) return `منذ ${months} شهر`;
-            return `منذ ${Math.floor(months / 12)} سنة`;
+            if (months < 12) return isArabic ? `منذ ${months} شهر` : `${months} ${months === 1 ? 'month' : 'months'} ago`;
+            const years = Math.floor(months / 12);
+            return isArabic ? `منذ ${years} سنة` : `${years} ${years === 1 ? 'year' : 'years'} ago`;
+        }
+
+        function getLocalizedDateLabel(item) {
+            return item && item.createdAt ? humanizeDate(item.createdAt) : (item?.date || '');
         }
 
         async function loadDynamicContent() {
@@ -4766,7 +4775,7 @@
                         return {
                         id: p.id, name: p.title, title: p.title, url: relation.thumbnailUrl, pageUrl: relation.watchUrl, downloadUrl: relation.downloadUrl,
                         category: relation.categories[0] || '', categories: relation.categories,
-                        date: humanizeDate(p.created_at), duration: relation.details.duration || p.duration || '0:00',
+                        date: humanizeDate(p.created_at), createdAt: p.created_at, duration: relation.details.duration || p.duration || '0:00',
                         likesPercentage: p.likes_percentage || '0%', views: p.views || 0,
                         description: typeof relation.details.summary === 'string' ? relation.details.summary : (typeof p.description === 'string' ? p.description : ''),
                         studio: relation.details.studio_name || p.studio || '', series: relation.details.series_name || p.series || '',
@@ -4779,7 +4788,7 @@
                         const relation = getPostRelation(p);
                         return {
                             name: p.title, url: p.id, images: relation.imageUrls.length ? relation.imageUrls : [relation.thumbnailUrl],
-                            date: humanizeDate(p.created_at), views: relation.views, likes: 0,
+                            date: humanizeDate(p.created_at), createdAt: p.created_at, views: relation.views, likes: 0,
                             desc: relation.details.summary || p.description || '', tags: p.tags || []
                         };
                     });
@@ -4810,7 +4819,7 @@
                             // No dedicated columns yet for these — default to a sensible single-language,
                             // no-schedule state until the dashboard exposes real fields for them.
                             languages: [{ code: 'en', label: 'English' }], schedule: '', simulrelease: false,
-                            chapters, views: relation.views, date: humanizeDate(p.created_at)
+                            chapters, views: relation.views, date: humanizeDate(p.created_at), createdAt: p.created_at
                         };
                     });
                     if (mangaPosts.length) allMangaData = mangaPosts;
@@ -4826,7 +4835,7 @@
                             const relation = getPostRelation(p);
                             modelPostsData[p.id] = {
                                 id: p.id, name: p.title, url: relation.thumbnailUrl, pageUrl: relation.watchUrl, downloadUrl: relation.downloadUrl, category: 'model_post',
-                                date: humanizeDate(p.created_at), duration: relation.details.duration || p.duration || '0:00',
+                                date: humanizeDate(p.created_at), createdAt: p.created_at, duration: relation.details.duration || p.duration || '0:00',
                                 likesPercentage: p.likes_percentage || '0%', views: relation.views,
                                 title: p.title, description: relation.details.summary || p.description || '',
                                 studio: relation.details.studio_name || p.studio || '', series: relation.details.series_name || p.series || '',
@@ -5798,14 +5807,7 @@
         }
 
         function timeAgo(timestamp) {
-            const diff = Math.max(0, Date.now() - timestamp);
-            const mins = Math.floor(diff / 60000);
-            if (mins < 1) return 'Just now';
-            if (mins < 60) return mins + 'm ago';
-            const hours = Math.floor(mins / 60);
-            if (hours < 24) return hours + 'h ago';
-            const days = Math.floor(hours / 24);
-            return days + 'd ago';
+            return humanizeDate(timestamp);
         }
 
         async function fetchNotifications() {
@@ -6778,7 +6780,7 @@
             wrapper.appendChild(img);
             const dateSpan = document.createElement('div');
             dateSpan.className = 'post-date';
-            dateSpan.innerHTML = `<i class="far fa-calendar-alt"></i> ${character.date}`;
+            dateSpan.innerHTML = `<i class="far fa-calendar-alt"></i> ${getLocalizedDateLabel(character)}`;
             wrapper.appendChild(dateSpan);
             const durationBadge = document.createElement('div');
             durationBadge.className = 'duration-badge';
@@ -7914,6 +7916,9 @@
             else if (currentPage === 'series') renderSeries();
             else if (currentPage === 'images') renderImages();
             else if (currentPage === 'settings') renderSettings();
+            else if (currentPage === 'notifications') renderNotifications();
+            else if (currentPage === 'watch-history') renderWatchHistory();
+            if (document.getElementById('post-comments-section')?.classList.contains('open')) renderCommentsList();
             updateSidebarActiveState(currentPage);
         }
 
