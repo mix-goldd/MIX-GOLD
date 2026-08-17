@@ -125,7 +125,7 @@
 
         @media (max-width: 480px) {
             .header-page-title {
-                font-size: var(--header-page-title-font-size, 0.9rem);
+                font-size: var(--header-page-title-font-size, 1rem);
             }
         }
 
@@ -6436,17 +6436,19 @@
             titleEl.style.removeProperty('--header-page-title-font-size');
             const isCompactScreen = window.matchMedia('(max-width: 480px)').matches;
             const baseFontSize = isCompactScreen
-                ? 14.4
+                ? 16
                 : (parseFloat(window.getComputedStyle(titleEl).fontSize) || 17.6);
             const menuWidth = header.querySelector('.menu-toggle')?.offsetWidth || 0;
             const searchWidth = header.querySelector('.header-controls')?.offsetWidth || 0;
-            const controlGap = isCompactScreen ? 46 : 44;
+            const controlGap = isCompactScreen ? 20 : 44;
             const availableWidth = Math.max(120, header.clientWidth - menuWidth - searchWidth - controlGap);
 
             titleEl.style.setProperty('--header-page-title-max-width', 'none');
             const naturalWidth = titleEl.scrollWidth;
-            const minimumFontSize = isCompactScreen ? 7.5 : 13;
-            const fittedFontSize = naturalWidth > availableWidth
+            const minimumFontSize = isCompactScreen ? 16 : 13;
+            const fittedFontSize = isCompactScreen
+                ? baseFontSize
+                : naturalWidth > availableWidth
                 ? Math.max(minimumFontSize, Math.round((baseFontSize * availableWidth / naturalWidth) * 10) / 10)
                 : baseFontSize;
 
