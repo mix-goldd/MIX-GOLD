@@ -482,6 +482,16 @@
         .dropdown-toggle.open .dropdown-arrow {
             transform: rotate(180deg);
         }
+        .comics-dropdown-controls {
+            margin-left: auto;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .comics-dropdown-controls .dropdown-arrow,
+        .comics-dropdown-controls .nav-lock-icon {
+            margin-left: 0;
+        }
         .dropdown-content {
             max-height: 0;
             overflow: hidden;
@@ -6576,8 +6586,10 @@
                         <div class="menu-item dropdown-toggle${navLockClass('comics')}" onclick="${navClickHandler('comics', 'toggleComicsMenu()')}">
                             <div class="menu-icon"><i class="fas fa-book"></i></div>
                             <div class="menu-text">${t('comicsMenu')}</div>
-                            ${navLockIcon('comics')}
-                            <i class="fas fa-chevron-down dropdown-arrow"></i>
+                            <div class="comics-dropdown-controls">
+                                <i class="fas fa-chevron-down dropdown-arrow"></i>
+                                ${navLockIcon('comics')}
+                            </div>
                         </div>
                         <div class="dropdown-content" id="comics-categories">
                             <a class="menu-item sub-item" data-page="manga" href="https://mix-gold-jet-manga.vercel.app/" onclick="event.preventDefault(); openStandalonePage('manga')">
