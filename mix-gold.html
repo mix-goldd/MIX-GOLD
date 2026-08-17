@@ -9137,6 +9137,8 @@ function toggleSave(url, cardElement) {
 
         window.addEventListener('popstate', function () {
             clearPostPlayer();
+            const postDetail = document.getElementById('post-detail');
+            if (postDetail) postDetail.classList.remove('active');
             const route = getDirectRoute();
             const postSlug = route.post;
             const dlSlug = route.dl;
