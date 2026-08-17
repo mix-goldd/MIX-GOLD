@@ -5022,23 +5022,30 @@
         }
 
         async function openStandaloneWithSession(destinationUrl, destinationLabel) {
+            const target = new URL(destinationUrl, window.location.href);
+            if (target.origin === window.location.origin) {
+                window.location.assign(target.toString());
+                return;
+            }
             try {
-                const { data: { session } } = await supabaseClient.auth.getSession();
+                const session = await Promise.race([
+                    supabaseClient.auth.getSession().then(({ data }) => data?.session || null).catch(() => null),
+                    new Promise(resolve => setTimeout(() => resolve(null), 700))
+                ]);
                 if (!session?.access_token || !session?.refresh_token) {
-                    window.location.assign(destinationUrl);
+                    window.location.assign(target.toString());
                     return;
                 }
                 const encodedSession = encodeAuthTransfer(session);
                 if (!encodedSession) {
-                    window.location.assign(destinationUrl);
+                    window.location.assign(target.toString());
                     return;
                 }
-                const target = new URL(destinationUrl);
                 target.hash = new URLSearchParams({ [MIX_GOLD_AUTH_FRAGMENT_KEY]: encodedSession }).toString();
                 window.location.assign(target.toString());
             } catch (error) {
                 console.warn(`تعذر نقل جلسة الدخول إلى ${destinationLabel}:`, error);
-                window.location.assign(destinationUrl);
+                window.location.assign(target.toString());
             }
         }
 
