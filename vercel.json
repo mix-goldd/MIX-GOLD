@@ -1,5 +1,10 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
+  "functions": {
+    "api/post-preview.mjs": {
+      "maxDuration": 10
+    }
+  },
   "rewrites": [
     { "source": "/post/:slug", "destination": "/api/post-preview?slug=:slug" },
     { "source": "/post/:path*", "destination": "/api/post-preview?slug=:path*" },
