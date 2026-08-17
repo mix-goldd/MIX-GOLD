@@ -4664,15 +4664,75 @@
 
         async function loadDynamicContent() {
             try {
-                const [settingsRes, postsRes, modelsRes] = await Promise.all([
+                const [settingsRes, postsRes, modelsRes, detailsRes, categoriesRes, starsRes, linksRes, mediaRes, metricsRes] = await Promise.all([
                     supabaseClient.from('site_settings').select('key, value'),
                     supabaseClient.from('posts').select('*').order('created_at', { ascending: false }),
                     supabaseClient.from('models').select('*').order('created_at', { ascending: false }),
+                    supabaseClient.from('post_details').select('post_id, summary, studio_name, series_name, duration'),
+                    supabaseClient.from('post_categories').select('post_id, category'),
+                    supabaseClient.from('post_stars').select('post_id, model_id'),
+                    supabaseClient.from('post_links').select('post_id, link_type, url'),
+                    supabaseClient.from('post_media').select('post_id, media_kind, url, sort_order').order('sort_order', { ascending: true }),
+                    supabaseClient.from('post_metrics').select('post_id, views, likes_count, dislikes_count'),
                 ]);
 
                 const { data: settingsRows, error: settingsErr } = settingsRes;
                 const { data: postsRows, error: postsErr } = postsRes;
                 const { data: modelsRows, error: modelsErr } = modelsRes;
+                const relationRowsReady = !detailsRes.error && !categoriesRes.error && !starsRes.error && !linksRes.error && !mediaRes.error && !metricsRes.error;
+                const detailsByPost = new Map((detailsRes.data || []).map(row => [row.post_id, row]));
+                const categoriesByPost = new Map();
+                const starsByPost = new Map();
+                const linksByPost = new Map();
+                const mediaByPost = new Map();
+                const metricsByPost = new Map((metricsRes.data || []).map(row => [row.post_id, row]));
+
+                (categoriesRes.data || []).forEach(row => {
+                    const values = categoriesByPost.get(row.post_id) || [];
+                    values.push(row.category);
+                    categoriesByPost.set(row.post_id, values);
+                });
+                (starsRes.data || []).forEach(row => {
+                    const values = starsByPost.get(row.post_id) || [];
+                    values.push(row.model_id);
+                    starsByPost.set(row.post_id, values);
+                });
+                (linksRes.data || []).forEach(row => {
+                    const values = linksByPost.get(row.post_id) || {};
+                    values[row.link_type] = row.url;
+                    linksByPost.set(row.post_id, values);
+                });
+                (mediaRes.data || []).forEach(row => {
+                    const values = mediaByPost.get(row.post_id) || { thumbnail: '', images: [] };
+                    if (row.media_kind === 'thumbnail') values.thumbnail = row.url;
+                    if (row.media_kind === 'image') values.images.push(row.url);
+                    mediaByPost.set(row.post_id, values);
+                });
+
+                if (!relationRowsReady) {
+                    console.warn('تعذر تحميل علاقات المنشورات الجديدة؛ سيُستخدم التوافق المؤقت مع بيانات المنشور الأساسية.');
+                }
+
+                const getPostRelation = post => {
+                    const legacyCategories = (Array.isArray(post.categories) && post.categories.length)
+                        ? post.categories
+                        : (post.category ? [post.category] : []);
+                    const legacyImages = Array.isArray(post.images) ? post.images : [];
+                    const relationMedia = mediaByPost.get(post.id) || { thumbnail: '', images: [] };
+                    const relationDetails = detailsByPost.get(post.id) || {};
+                    const relationLinks = linksByPost.get(post.id) || {};
+                    const relationMetrics = metricsByPost.get(post.id) || {};
+                    return {
+                        details: relationDetails,
+                        categories: relationRowsReady ? (categoriesByPost.get(post.id) || []) : legacyCategories,
+                        starIds: relationRowsReady ? (starsByPost.get(post.id) || []) : (post.model_id ? [post.model_id] : []),
+                        watchUrl: relationRowsReady ? (relationLinks.watch || '') : (post.page_url || ''),
+                        downloadUrl: relationRowsReady ? (relationLinks.download || '') : (post.download_url || post.page_url || ''),
+                        thumbnailUrl: relationRowsReady ? (relationMedia.thumbnail || '') : (post.thumbnail_url || ''),
+                        imageUrls: relationRowsReady && relationMedia.images.length ? relationMedia.images : legacyImages,
+                        views: relationRowsReady ? (relationMetrics.views ?? 0) : (post.views || 0)
+                    };
+                };
 
                 if (!settingsErr && settingsRows) {
                     const map = {};
@@ -4691,21 +4751,28 @@
                 }
 
                 if (!postsErr && postsRows && postsRows.length > 0) {
-                    const videoPosts = postsRows.filter(p => p.type === 'video').map(p => ({
-                        id: p.id, name: p.title, title: p.title, url: p.thumbnail_url, pageUrl: p.page_url, downloadUrl: p.download_url || p.page_url,
-                        category: p.category, categories: (Array.isArray(p.categories) && p.categories.length) ? p.categories : (p.category ? [p.category] : []),
-                        date: humanizeDate(p.created_at), duration: p.duration || '0:00',
+                    const videoPosts = postsRows.filter(p => p.type === 'video').map(p => {
+                        const relation = getPostRelation(p);
+                        return {
+                        id: p.id, name: p.title, title: p.title, url: relation.thumbnailUrl, pageUrl: relation.watchUrl, downloadUrl: relation.downloadUrl,
+                        category: relation.categories[0] || '', categories: relation.categories,
+                        date: humanizeDate(p.created_at), duration: relation.details.duration || p.duration || '0:00',
                         likesPercentage: p.likes_percentage || '0%', views: p.views || 0,
-                        description: typeof p.description === 'string' ? p.description : '',
-                        studio: p.studio || '', series: p.series || '', model_id: p.model_id || null
-                    }));
+                        description: typeof relation.details.summary === 'string' ? relation.details.summary : (typeof p.description === 'string' ? p.description : ''),
+                        studio: relation.details.studio_name || p.studio || '', series: relation.details.series_name || p.series || '',
+                        model_id: relation.starIds[0] || null, model_ids: relation.starIds, views: relation.views
+                    };
+                    });
                     if (videoPosts.length) characterData = videoPosts;
 
-                    const imagePosts = postsRows.filter(p => p.type === 'image').map(p => ({
-                        name: p.title, url: p.id, images: (p.images && p.images.length ? p.images : [p.thumbnail_url]),
-                        date: humanizeDate(p.created_at), views: p.views || 0, likes: 0,
-                        desc: p.description || '', tags: p.tags || []
-                    }));
+                    const imagePosts = postsRows.filter(p => p.type === 'image').map(p => {
+                        const relation = getPostRelation(p);
+                        return {
+                            name: p.title, url: p.id, images: relation.imageUrls.length ? relation.imageUrls : [relation.thumbnailUrl],
+                            date: humanizeDate(p.created_at), views: relation.views, likes: 0,
+                            desc: relation.details.summary || p.description || '', tags: p.tags || []
+                        };
+                    });
                     if (imagePosts.length) pureImagesData = imagePosts;
 
                     // Manga posts store their chapter list inside the generic `images`
@@ -4713,6 +4780,7 @@
                     // for type:'manga' each entry is a chapter object instead:
                     // { number, title, pages: [...], date }. This needs no schema change.
                     const mangaPosts = postsRows.filter(p => p.type === 'manga').map(p => {
+                        const relation = getPostRelation(p);
                         const rawChapters = Array.isArray(p.images) ? p.images : [];
                         const chapters = rawChapters
                             .map((c, idx) => ({
@@ -4725,15 +4793,14 @@
                             .sort((a, b) => a.number - b.number);
                         return {
                             id: p.id, url: p.id, name: p.title, title: p.title,
-                            cover: p.thumbnail_url, thumbnail_url: p.thumbnail_url,
-                            author: p.studio || '', status: p.series || '',
-                            genre: p.category || '',
-                            genres: (Array.isArray(p.categories) && p.categories.length) ? p.categories : (p.category ? [p.category] : []),
-                            description: p.description || '', tags: p.tags || [],
+                            cover: relation.thumbnailUrl, thumbnail_url: relation.thumbnailUrl,
+                            author: relation.details.studio_name || p.studio || '', status: relation.details.series_name || p.series || '',
+                            genre: relation.categories[0] || '', genres: relation.categories,
+                            description: relation.details.summary || p.description || '', tags: p.tags || [],
                             // No dedicated columns yet for these — default to a sensible single-language,
                             // no-schedule state until the dashboard exposes real fields for them.
                             languages: [{ code: 'en', label: 'English' }], schedule: '', simulrelease: false,
-                            chapters, views: p.views || 0, date: humanizeDate(p.created_at)
+                            chapters, views: relation.views, date: humanizeDate(p.created_at)
                         };
                     });
                     if (mangaPosts.length) allMangaData = mangaPosts;
@@ -4742,15 +4809,18 @@
                     // video form) — those are the "related posts" shown on a model's page.
                     // (There's no separate type:'model' post — the dashboard only ever
                     // creates those in the `models` table, handled below.)
-                    const modelPostEntries = postsRows.filter(p => p.type === 'video' && p.model_id);
+                    const modelPostEntries = postsRows.filter(p => p.type === 'video' && getPostRelation(p).starIds.length);
                     if (modelPostEntries.length) {
                         modelPostsData = {};
                         modelPostEntries.forEach(p => {
+                            const relation = getPostRelation(p);
                             modelPostsData[p.id] = {
-                                id: p.id, name: p.title, url: p.thumbnail_url, pageUrl: p.page_url, downloadUrl: p.download_url || p.page_url, category: 'model_post',
-                                date: humanizeDate(p.created_at), duration: p.duration || '0:00',
-                                likesPercentage: p.likes_percentage || '0%', views: p.views || 0,
-                                title: p.title, studio: p.studio || '', series: p.series || ''
+                                id: p.id, name: p.title, url: relation.thumbnailUrl, pageUrl: relation.watchUrl, downloadUrl: relation.downloadUrl, category: 'model_post',
+                                date: humanizeDate(p.created_at), duration: relation.details.duration || p.duration || '0:00',
+                                likesPercentage: p.likes_percentage || '0%', views: relation.views,
+                                title: p.title, description: relation.details.summary || p.description || '',
+                                studio: relation.details.studio_name || p.studio || '', series: relation.details.series_name || p.series || '',
+                                model_id: relation.starIds[0] || null, model_ids: relation.starIds
                             };
                         });
                     }
@@ -4765,7 +4835,7 @@
                     if (modelsRows.length > 0) {
                         modelsData = modelsRows.map(m => ({
                             id: m.id, name: m.name, url: m.thumbnail_url, category: m.category || 'model',
-                            posts: (postsRows || []).filter(p => p.type === 'video' && p.model_id === m.id).map(p => p.id),
+                            posts: (postsRows || []).filter(p => p.type === 'video' && getPostRelation(p).starIds.includes(m.id)).map(p => p.id),
                             subs: m.subs || '0', likes: m.likes || '0'
                         }));
                     } else {
@@ -6662,7 +6732,9 @@
             const div = document.createElement('div');
             div.className = `image-card ${isSaved ? 'saved' : ''}`;
             div.dataset.name = character.name;
-            div.dataset.url = character.url;
+            div.dataset.postId = character.id || '';
+            div.dataset.url = character.id || character.url;
+            div.dataset.imageUrl = character.url;
             div.dataset.category = character.category;
             div.dataset.studio = character.studio || "";
             div.dataset.series = character.series || "";
@@ -6952,9 +7024,10 @@
             const toggle = document.getElementById('models-toggle-btn');
             if (!section || !list) return;
 
-            const linkedStars = video && video.model_id
-                ? modelsData.filter(model => model.id === video.model_id)
-                : [];
+            const linkedStarIds = video && Array.isArray(video.model_ids) && video.model_ids.length
+                ? video.model_ids
+                : (video && video.model_id ? [video.model_id] : []);
+            const linkedStars = modelsData.filter(model => linkedStarIds.includes(model.id));
 
             list.innerHTML = '';
             list.classList.remove('expanded');
@@ -8840,16 +8913,14 @@ function toggleSave(url, cardElement) {
         }
 
         function findVideoDataByUrl(url) {
-            const fromCharacters = characterData.find(v => v.url === url);
+            const fromCharacters = characterData.find(v => v.id === url || v.url === url);
             if (fromCharacters) return fromCharacters;
-            return Object.values(modelPostsData).find(p => p.url === url) || null;
+            return Object.values(modelPostsData).find(p => p.id === url || p.url === url) || null;
         }
 
         // ---- Post links & download subpage ----
-        // Posts are keyed throughout this app by their thumbnail url (see
-        // dataset.url on every card), so the shareable slug for a post/download
-        // link is just a short alphanumeric hash of that same key — no extra
-        // "file title" needs to be typed anywhere, and no DB column is needed.
+        // Every shareable route is keyed by the post record id, not by a
+        // thumbnail URL. This keeps two posts with the same cover independent.
         function slugFromKey(key) {
             const str = String(key || '');
             let hash = 5381;
@@ -8861,9 +8932,9 @@ function toggleSave(url, cardElement) {
         }
 
         function findVideoDataBySlug(slug) {
-            const fromCharacters = characterData.find(v => slugFromKey(v.url) === slug);
+            const fromCharacters = characterData.find(v => v.id === slug || slugFromKey(v.id || v.url) === slug || slugFromKey(v.url) === slug);
             if (fromCharacters) return fromCharacters;
-            return Object.values(modelPostsData).find(p => slugFromKey(p.url) === slug) || null;
+            return Object.values(modelPostsData).find(p => p.id === slug || slugFromKey(p.id || p.url) === slug || slugFromKey(p.url) === slug) || null;
         }
 
         const MIX_GOLD_PAGES = ['home', 'videos', 'manga', 'manhwa', 'models', 'studios', 'series', 'images', 'saved', 'notifications', 'watch-history', 'settings', 'profile', 'login'];
@@ -8921,7 +8992,7 @@ function toggleSave(url, cardElement) {
         // button returns to the homepage.
         function openPostFromCard(cardElement) {
             showPostDetail(cardElement);
-            const slug = slugFromKey(cardElement.dataset.url);
+            const slug = slugFromKey(cardElement.dataset.postId || cardElement.dataset.url);
             history.pushState({ view: 'post', slug: slug }, '', directPath('post', slug));
         }
 
@@ -8985,7 +9056,7 @@ function toggleSave(url, cardElement) {
             const videoData = findVideoDataByUrl(currentPostCard.dataset.url);
             if (!videoData) return;
             showDownloadDetail(videoData, currentPostCard);
-            const slug = slugFromKey(currentPostCard.dataset.url);
+            const slug = slugFromKey(currentPostCard.dataset.postId || currentPostCard.dataset.url);
             history.pushState({ view: 'download', slug: slug }, '', directPath('download', slug));
         }
 
