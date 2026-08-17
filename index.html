@@ -242,11 +242,13 @@
             justify-content: center;
             visibility: hidden;
             opacity: 0;
+            pointer-events: none;
             transition: opacity 0.3s ease, visibility 0.3s ease;
         }
         #agreement-overlay.active {
             visibility: visible;
             opacity: 1;
+            pointer-events: auto;
         }
         .agreement-modal {
             background: var(--card-bg);
