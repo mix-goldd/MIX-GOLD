@@ -4781,7 +4781,8 @@
                         downloadUrl: getSafePlayerUrl(relationRowsReady ? (relationLinks.download || '') : (post.download_url || post.page_url || '')),
                         thumbnailUrl: relationRowsReady ? (relationMedia.thumbnail || '') : (post.thumbnail_url || ''),
                         imageUrls: relationRowsReady && relationMedia.images.length ? relationMedia.images : legacyImages,
-                        views: relationRowsReady ? (relationMetrics.views ?? 0) : (post.views || 0)
+                        views: relationRowsReady ? (relationMetrics.views ?? 0) : (post.views || 0),
+                        likes: relationRowsReady ? (relationMetrics.likes_count ?? 0) : (post.likes || 0)
                     };
                 };
 
@@ -4811,7 +4812,7 @@
                         likesPercentage: p.likes_percentage || '0%', views: p.views || 0,
                         description: typeof relation.details.summary === 'string' ? relation.details.summary : (typeof p.description === 'string' ? p.description : ''),
                         studio: relation.details.studio_name || p.studio || '', series: relation.details.series_name || p.series || '',
-                        model_id: relation.starIds[0] || null, model_ids: relation.starIds, views: relation.views
+                        model_id: relation.starIds[0] || null, model_ids: relation.starIds, views: relation.views, likes: relation.likes
                     };
                     });
                     if (videoPosts.length) characterData = videoPosts;
@@ -6252,21 +6253,36 @@
             return 0;
         }
 
+        function parseAnimeSortMetric(value) {
+            if (typeof value === 'number' && Number.isFinite(value)) return value;
+            const matched = String(value ?? '').trim().replace(/,/g, '').toUpperCase()
+                .match(/^(-?\d+(?:\.\d+)?)\s*([KMB])?$/);
+            if (!matched) return 0;
+            const multipliers = { K: 1_000, M: 1_000_000, B: 1_000_000_000 };
+            return Number(matched[1]) * (multipliers[matched[2]] || 1);
+        }
+
+        function getAnimeAddedAt(item) {
+            const timestamp = new Date(item?.createdAt || item?.created_at || 0).getTime();
+            return Number.isFinite(timestamp) ? timestamp : 0;
+        }
+
+        function getAnimeRatingScore(item) {
+            const likes = parseAnimeSortMetric(item?.likes ?? item?.likesCount ?? item?.likes_count);
+            return likes > 0 ? likes : parseAnimeSortMetric(item?.likesPercentage);
+        }
+
         function advancedSortVideos(videosArray, sortType) {
             const sorted = [...videosArray];
             switch(sortType) {
                 case 'latest':
-                    return sorted;
+                    return sorted.sort((a, b) => getAnimeAddedAt(b) - getAnimeAddedAt(a));
                 case 'title':
                     return sorted.sort((a, b) => (a.title || a.name || '').localeCompare(b.title || b.name || ''));
                 case 'most_viewed':
-                    return sorted.sort((a, b) => b.views - a.views);
+                    return sorted.sort((a, b) => parseAnimeSortMetric(b.views) - parseAnimeSortMetric(a.views));
                 case 'top_rated':
-                    return sorted.sort((a, b) => {
-                        const aRate = parseFloat(a.likesPercentage) || 0;
-                        const bRate = parseFloat(b.likesPercentage) || 0;
-                        return bRate - aRate;
-                    });
+                    return sorted.sort((a, b) => getAnimeRatingScore(b) - getAnimeRatingScore(a));
                 case 'longest':
                     return sorted.sort((a, b) => {
                         return parseDurationToSeconds(b.duration) - parseDurationToSeconds(a.duration);
