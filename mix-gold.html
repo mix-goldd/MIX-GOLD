@@ -5056,7 +5056,7 @@
                 navigateTo(page);
                 return;
             }
-            await openStandaloneWithSession(destinationUrl, getPageName(page) || page);
+            await openStandaloneWithSession(destinationUrl, getPageTitle(page) || page);
         }
 
         async function restoreTransferredAuthSession() {
