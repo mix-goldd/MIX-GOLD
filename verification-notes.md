@@ -166,3 +166,9 @@
 - أعادت صفحات `settings`, `profile`, `anime`, `manga`, `manhwa`, `images`, `stars`, `studios`, `series`, `login`, `saved` و`watch-history` محتوى MIX GOLD من نطاقاتها الرسمية بدل أخطاء HTTP؛ وهذا يؤكد أن النطاقات ما زالت متصلة بمشاريع Vercel صالحة.
 - فحص مصدر HTML الحي أكد أن `saved` و`watch-history` يتضمنان العلامة `mixgold_agreement`، بينما النسخ الحية الحالية لـ`notifications`, `settings`, `profile`, `anime`, `manga`, `manhwa`, `images`, `stars`, `studios`, `series` و`login` لا تتضمنها بعد.
 - بناءً على ذلك، ضبط Root Directory لا يكفي وحده لتسليم آخر Commit إلى كل مشروع؛ سيجري دفع Commit تحفيزي صغير داخل مجلدات `standalone-pages` لتشغيل إعادة النشر التلقائية للمشاريع المرتبطة، ثم يُعاد فحص العلامات الحية.
+
+## متابعة إعادة النشر التلقائية — 18 أغسطس 2026
+
+- دُفع Commit التحفيز `6538091` إلى فرع GitHub `main` بعد توليد 13 صفحة مستقلة من ملف الموقع الحالي. اجتازت اختبارات المشروع 35 اختبارًا ونجح بناء الإنتاج قبل الدفع.
+- وصلت علامة `mixgold_agreement` إلى صفحات `settings`, `profile`, `anime`, `manga`, `manhwa`, `images`, `stars`, `studios`, `series` و`login` خلال النشر المتدرج؛ وبذلك تستقبل هذه الصفحات الآن أحدث منطق نقل Agreement.
+- صفحة `notifications` ما زالت تعرض النسخة السابقة بعد المهلة، رغم أن المصدر الحي يؤكد أنها صفحة Notifications الصحيحة. يلزم إعادة نشرها يدويًا من لوحة Vercel أو مراجعة ارتباطها بالفرع `main` قبل اعتمادها ضمن النسخ المحدثة.
