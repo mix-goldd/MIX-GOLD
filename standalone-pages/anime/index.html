@@ -5025,49 +5025,46 @@
             }
         }
 
-        async function openStandaloneWithSession(destinationUrl, destinationLabel) {
+        let navigationSession = null;
+
+        function cacheNavigationSession(session) {
+            navigationSession = session?.access_token && session?.refresh_token ? session : null;
+            return navigationSession;
+        }
+
+        function openStandaloneWithSession(destinationUrl, destinationLabel) {
             const target = new URL(destinationUrl, window.location.href);
             if (target.origin === window.location.origin) {
                 window.location.assign(target.toString());
                 return;
             }
-            try {
-                const session = await Promise.race([
-                    supabaseClient.auth.getSession().then(({ data }) => data?.session || null).catch(() => null),
-                    new Promise(resolve => setTimeout(() => resolve(null), 700))
-                ]);
-                if (!session?.access_token || !session?.refresh_token) {
-                    window.location.assign(target.toString());
-                    return;
-                }
+            const session = navigationSession;
+            if (session) {
                 const encodedSession = encodeAuthTransfer(session);
-                if (!encodedSession) {
-                    window.location.assign(target.toString());
-                    return;
+                if (encodedSession) {
+                    target.hash = new URLSearchParams({ [MIX_GOLD_AUTH_FRAGMENT_KEY]: encodedSession }).toString();
+                } else {
+                    console.warn(`تعذر تجهيز جلسة الدخول للانتقال إلى ${destinationLabel}.`);
                 }
-                target.hash = new URLSearchParams({ [MIX_GOLD_AUTH_FRAGMENT_KEY]: encodedSession }).toString();
-                window.location.assign(target.toString());
-            } catch (error) {
-                console.warn(`تعذر نقل جلسة الدخول إلى ${destinationLabel}:`, error);
-                window.location.assign(target.toString());
             }
+            window.location.assign(target.toString());
         }
 
-        async function openSavedStandalone() {
-            await openStandalonePage('saved');
+        function openSavedStandalone() {
+            openStandalonePage('saved');
         }
 
-        async function openHomeStandalone() {
-            await openStandalonePage('home');
+        function openHomeStandalone() {
+            openStandalonePage('home');
         }
 
-        async function openStandalonePage(page) {
+        function openStandalonePage(page) {
             const destinationUrl = MIX_GOLD_STANDALONE_PAGES[page];
             if (!destinationUrl) {
                 navigateTo(page);
                 return;
             }
-            await openStandaloneWithSession(destinationUrl, getPageTitle(page) || page);
+            openStandaloneWithSession(destinationUrl, getPageTitle(page) || page);
         }
 
         async function restoreTransferredAuthSession() {
@@ -5080,6 +5077,7 @@
                 if (!session?.access_token || !session?.refresh_token) return;
                 const { error } = await supabaseClient.auth.setSession(session);
                 if (error) console.warn('تعذر استعادة جلسة الدخول المنقولة:', error);
+                else cacheNavigationSession(session);
             } catch (error) {
                 console.warn('تعذر استعادة جلسة الدخول المنقولة:', error);
             } finally {
@@ -5433,6 +5431,7 @@
         async function checkUserSession(options = {}) {
             if (!options.skipTransfer) await restoreTransferredAuthSession();
             const { data: { session } } = await supabaseClient.auth.getSession();
+            cacheNavigationSession(session);
             setLoggedIn(!!session);
             if (session) {
                 await fetchUserData();
