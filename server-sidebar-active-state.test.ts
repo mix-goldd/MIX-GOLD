@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it, vi } from "vitest";
-import { buildPreviewHtml, findPostBySlug, getPreviewImage, sanitizeSlug, slugFromPostKey } from "../api/post-preview.mjs";
+import { buildPreviewHtml, findPostBySlug, getPreviewImage, getShareImage, sanitizeSlug, slugFromPostKey } from "../api/post-preview.mjs";
 
 const source = readFileSync(new URL("../client/index.html", import.meta.url), "utf8");
 const vercelConfig = JSON.parse(readFileSync(new URL("../vercel.json", import.meta.url), "utf8"));
@@ -17,6 +17,13 @@ describe("حالة القائمة الجانبية", () => {
     expect(source).toContain('data-page="saved"');
   });
 
+  it("يزيل تحديد القائمة عند فتح تفاصيل فيديو ويحتفظ بتنقل عناصر القائمة", () => {
+    expect(source).toContain("document.getElementById('post-detail').classList.add('active');\n            updateSidebarActiveState('');");
+    expect(source).toContain("function updateSidebarActiveState(page)");
+    expect(source).toContain("targetElement.classList.add('active');");
+    expect(source).toContain("function navigateTo(page, options = {})");
+  });
+
   it("ينقل جلسة المستخدم إلى Home عبر جزء الرابط الآمن", () => {
     expect(source).toContain("async function openHomeStandalone()");
     expect(source).toContain("await openStandalonePage('home')");
@@ -28,9 +35,19 @@ describe("حالة القائمة الجانبية", () => {
     expect(source).toContain("settings: 'https://mix-gold-jet-settings.vercel.app/'");
     expect(source).toContain("'watch-history': 'https://mix-gold-jet-watch-history.vercel.app/'");
     expect(source).toContain("async function openStandalonePage(page)");
-    expect(source).toContain("await openStandaloneWithSession(destinationUrl, getPageName(page) || page)");
+    expect(source).toContain("await openStandaloneWithSession(destinationUrl, getPageTitle(page) || page)");
+    expect(source).not.toContain("getPageName(page)");
     expect(source).toContain("openStandalonePage('settings')");
     expect(source).toContain("openStandalonePage('watch-history')");
+  });
+
+  it("يستعيد جلسة Supabase قبل بناء واجهة الصفحة المستقلة فلا يظهر الحساب كزائر", () => {
+    expect(source).toContain("async function checkUserSession(options = {})");
+    expect(source).toContain("if (!options.skipTransfer) await restoreTransferredAuthSession();");
+    expect(source).toMatch(/async function init\(\) \{\s*\/\/ صفحات Vercel المستقلة[\s\S]*?await restoreTransferredAuthSession\(\);\s*await loadDynamicContent\(\);/);
+    expect(source).toContain("currentUserProfile = loadCachedUserProfile();\n            await checkUserSession({ skipTransfer: true });");
+    const initBlock = source.match(/async function init\(\) \{[\s\S]*?\n        \}\n        init\(\);/)?.[0] || "";
+    expect(initBlock).not.toContain("checkUserSession();");
   });
 
   it("يفتح أيقونة الحساب في الصفحة المستقلة المناسبة", () => {
@@ -160,9 +177,52 @@ describe("حالة القائمة الجانبية", () => {
   });
 
   it("يستخدم شعار MIX GOLD الجديد في ترويسة الموقع", () => {
-    expect(source).toContain('src="/manus-storage/mix-gold-logo_310bd072.png"');
+    expect(source).toContain('src="https://i.ibb.co/bjyKccjV/Picsart-26-08-17-15-37-39-933.png"');
     expect(source).toContain('alt="MIX GOLD Logo"');
     expect(source).not.toContain('src="https://iili.io/KAz9Ybt.jpg"');
+  });
+
+  it("يحاذي نص ملخص القصة إلى اليمين دون تغيير زر إظهار المزيد", () => {
+    expect(source).toMatch(/\.desc-text\s*\{[\s\S]*?text-align:\s*right;[\s\S]*?direction:\s*rtl;/);
+    expect(source).toContain('class="desc-toggle-btn"');
+  });
+
+  it("ينقل صفحات فصل المانجا بحركة أفقية تراعي اتجاه القراءة والسحب", () => {
+    expect(source).toContain("function initMangaReaderSwipe()");
+    expect(source).toContain("if (Math.abs(dx) < 45 || Math.abs(dx) < Math.abs(dy)) return;");
+    expect(source).toContain("const goNext = mangaReaderDirection === 'rtl' ? !swipedLeft : swipedLeft;");
+    expect(source).toContain("renderMangaReaderChapter(currentMangaPageIndex + 1, { transition: 'next' });");
+    expect(source).toContain("renderMangaReaderChapter(currentMangaPageIndex - 1, { transition: 'prev' });");
+    expect(source).toContain("manga-page-slide-from-right");
+    expect(source).toContain("manga-page-slide-from-left");
+  });
+
+  it("يرتب Anime وفق تاريخ الإضافة والمشاهدات وعدد الإعجابات الفعلي", () => {
+    expect(source).toContain("function parseAnimeSortMetric(value)");
+    expect(source).toContain("return sorted.sort((a, b) => getAnimeAddedAt(b) - getAnimeAddedAt(a));");
+    expect(source).toContain("parseAnimeSortMetric(b.views) - parseAnimeSortMetric(a.views)");
+    expect(source).toContain("function getAnimeRatingScore(item)");
+    expect(source).toContain("relationMetrics.likes_count");
+    expect(source).toContain("getAnimeRatingScore(b) - getAnimeRatingScore(a)");
+    expect(source).toContain("{ value: 'top_rated', label: 'Top Rated', labelAr: 'الأكثر تقييمًا' }");
+  });
+
+  it("يربط نافذة فرز Anime بزرها على الهاتف ويضبط حجمها ومحاذاة نصها", () => {
+    expect(source).toContain("#videos-page-sort-dropdown .sort-dropdown.show");
+    expect(source).toContain("top: calc(100% + 8px);");
+    expect(source).toContain("right: 0;");
+    expect(source).toContain("width: max-content;");
+    expect(source).toContain("max-width: calc(100vw - 24px);");
+    expect(source).toContain("justify-content: center !important;");
+    expect(source).toContain("text-align: center !important;");
+  });
+
+  it("يفتح لوحة المشاركة الأصلية ويحافظ على نسخ الرابط كبديل آمن", () => {
+    expect(source).toContain("if (typeof navigator.share === 'function')");
+    expect(source).toContain("await navigator.share({ title, text, url });");
+    expect(source).toContain("if (error?.name === 'AbortError') return;");
+    expect(source).toContain("await navigator.clipboard.writeText(url);");
+    expect(source).toContain("if (shareBtn) shareBtn.onclick = handleShare;");
   });
 
   it("يحذف تضمين مزود الفيديو المحظور وينظف المشغل عند الرجوع أو مغادرة المنشور", () => {
@@ -186,6 +246,31 @@ describe("حالة القائمة الجانبية", () => {
     expect(source).not.toContain("if (currentPostCard) openPostFromCard(currentPostCard);");
   });
 
+  it("يكيّف عنوان ترويسة المنشور مع المساحة المتاحة بين زري القائمة والبحث", () => {
+    expect(source).toContain("function fitHeaderPageTitle()");
+    expect(source).toContain("header.querySelector('.menu-toggle')?.offsetWidth");
+    expect(source).toContain("header.querySelector('.header-controls')?.offsetWidth");
+    expect(source).toContain("const isCompactScreen = window.matchMedia('(max-width: 480px)').matches;");
+    expect(source).toContain("? 15");
+    expect(source).toContain("titleEl.style.setProperty('--header-page-title-max-width', 'none');");
+    expect(source).toContain("const naturalWidth = titleEl.scrollWidth;");
+    expect(source).toContain("const controlGap = isCompactScreen ? 12 : 44;");
+    expect(source).toContain("const fittedFontSize = isCompactScreen");
+    expect(source).toContain("const minimumFontSize = isCompactScreen ? 13 : 13;");
+    expect(source).toContain("titleEl.style.setProperty('--header-page-title-font-size'");
+    expect(source).toContain("window.addEventListener('resize', fitHeaderPageTitle);");
+    expect(source).toContain("requestAnimationFrame(() => requestAnimationFrame(fitHeaderPageTitle));");
+    expect(source).toContain("font-size: var(--header-page-title-font-size, 0.9375rem);");
+    expect(source).toContain("max-width: var(--header-page-title-max-width, 55%);");
+    expect(source).toContain("white-space: normal;");
+    expect(source).toContain("overflow: visible;");
+    expect(source).toContain("unicode-bidi: plaintext;");
+    expect(source).toContain(".header-title-episode {");
+    expect(source).toContain("unicode-bidi: isolate;");
+    expect(source).toContain("const title = [titleMain, episodeTitle].filter(Boolean).join(' ')");
+    expect(source).toContain("episodeSpan.dir = /[\\u0600-\\u06FF]/.test(episodeMatch[2]) ? 'rtl' : 'ltr';");
+  });
+
   it("ينشئ معاينة مشاركة برابط وصورة وعنوان المنشور لكل مسار post", () => {
     const previewHtml = buildPreviewHtml("<html><head><title>MIX GOLD</title></head><body></body></html>", {
       title: "Episode One",
@@ -195,11 +280,18 @@ describe("حالة القائمة الجانبية", () => {
       category: "Anime",
     });
     expect(previewHtml).toContain('<meta property="og:title" content="Episode One">');
-    expect(previewHtml).toContain('<meta property="og:image" content="https://cdn.example.com/post-cover.jpg">');
+    expect(previewHtml).toContain('<meta property="og:image:width" content="1200">');
+    expect(previewHtml).toContain('<meta property="og:image:height" content="675">');
+    expect(previewHtml).toContain('<meta property="og:image:type" content="image/jpeg">');
     expect(previewHtml).toContain('<meta name="twitter:card" content="summary_large_image">');
     expect(previewHtml).toContain('<link rel="canonical" href="https://mix-gold-jet.vercel.app/post/6t1nx1">');
     expect(getPreviewImage({ images: ["https://cdn.example.com/fallback.jpg"] })).toBe("https://cdn.example.com/fallback.jpg");
     expect(getPreviewImage({}, [{ media_kind: "video", url: "https://video.example.com/watch" }])).not.toBe("https://video.example.com/watch");
+    const shareImage = getShareImage("https://cdn.example.com/post-cover.jpg");
+    expect(shareImage).toContain("url=https%3A%2F%2Fcdn.example.com%2Fpost-cover.jpg");
+    expect(shareImage).toContain("w=1200");
+    expect(shareImage).toContain("h=675");
+    expect(shareImage).toContain("fit=cover");
     expect(sanitizeSlug("6t1nx1")).toBe("6t1nx1");
     expect(sanitizeSlug("../unsafe")).toBe("");
     const postId = "f4462b9f-e9ee-47e1-ae01-1cc688c91b18";
@@ -211,5 +303,18 @@ describe("حالة القائمة الجانبية", () => {
     expect(vercelConfig.rewrites).toEqual(expect.arrayContaining([
       expect.objectContaining({ source: "/post/:slug", destination: "/api/post-preview?slug=:slug" }),
     ]));
+  });
+
+  it("يبدأ دخول Google على الهاتف بالمسار المدمج وFedCM قبل بديل إعادة التوجيه", () => {
+    expect(source).toContain('https://accounts.google.com/gsi/client');
+    expect(source).toContain("signInWithIdToken({\n                provider: 'google'");
+    expect(source).toContain('use_fedcm_for_prompt: true');
+    expect(source).toContain('async function continueWithGoogleOAuthRedirect()');
+    expect(source).toContain('async function loginWithGoogleOnDevice()');
+  });
+
+  it("لا تحجب طبقة الاتفاقية المخفية لمس أزرار تسجيل الدخول", () => {
+    expect(source).toContain('pointer-events: none;');
+    expect(source).toContain('#agreement-overlay.active {\n            visibility: visible;\n            opacity: 1;\n            pointer-events: auto;');
   });
 });

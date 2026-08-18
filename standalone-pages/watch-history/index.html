@@ -111,15 +111,35 @@
             position: absolute;
             left: 50%;
             transform: translateX(-50%);
-            font-size: 1.1rem;
+            font-size: var(--header-page-title-font-size, 1.1rem);
             font-weight: 700;
             color: var(--text-color);
             display: none;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
-            max-width: 55%;
+            max-width: var(--header-page-title-max-width, 55%);
+            line-height: 1.2;
+            transition: font-size 0.18s cubic-bezier(0.23, 1, 0.32, 1);
             pointer-events: none;
+            unicode-bidi: plaintext;
+        }
+
+        .header-title-episode {
+            unicode-bidi: isolate;
+        }
+
+        @media (max-width: 480px) {
+            .header-page-title {
+                /* يظل العنوان الطويل مقروءًا ويظهر كاملًا بين أزرار الترويسة. */
+                max-width: var(--header-page-title-max-width, 58%);
+                font-size: var(--header-page-title-font-size, 0.9375rem);
+                line-height: 1.18;
+                white-space: normal;
+                overflow: visible;
+                text-overflow: clip;
+                text-align: center;
+            }
         }
 
         .header-controls {
@@ -223,11 +243,13 @@
             justify-content: center;
             visibility: hidden;
             opacity: 0;
+            pointer-events: none;
             transition: opacity 0.3s ease, visibility 0.3s ease;
         }
         #agreement-overlay.active {
             visibility: visible;
             opacity: 1;
+            pointer-events: auto;
         }
         .agreement-modal {
             background: var(--card-bg);
@@ -482,6 +504,16 @@
         }
         .dropdown-toggle.open .dropdown-arrow {
             transform: rotate(180deg);
+        }
+        .comics-dropdown-controls {
+            margin-left: auto;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .comics-dropdown-controls .dropdown-arrow,
+        .comics-dropdown-controls .nav-lock-icon {
+            margin-left: 0;
         }
         .dropdown-content {
             max-height: 0;
@@ -1809,6 +1841,9 @@
             font-size: 1rem;
             line-height: 1.6;
             color: var(--text-color);
+            text-align: right;
+            direction: rtl;
+            unicode-bidi: plaintext;
             max-height: 78px;
             overflow: hidden;
             transition: max-height 0.5s ease-in-out;
@@ -4029,7 +4064,7 @@
             <button class="menu-toggle" onclick="toggleSidebar()">
                 <i class="fas fa-bars"></i>
             </button>
-            <img src="https://iili.io/KAz9Ybt.jpg" alt="PulseX Logo" class="header-logo" id="header-logo-img" onclick="navigateTo('home')">
+            <img src="https://i.ibb.co/bjyKccjV/Picsart-26-08-17-15-37-39-933.png" alt="MIX GOLD Logo" class="header-logo" id="header-logo-img" onclick="navigateTo('home')">
             <span class="header-page-title" id="header-page-title"></span>
             <div class="header-controls">
                 <button class="search-toggle" onclick="toggleSearch()">
@@ -4508,6 +4543,7 @@
     </footer>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.js"></script>
     <script>
         const translations = {
@@ -4749,7 +4785,8 @@
                         downloadUrl: getSafePlayerUrl(relationRowsReady ? (relationLinks.download || '') : (post.download_url || post.page_url || '')),
                         thumbnailUrl: relationRowsReady ? (relationMedia.thumbnail || '') : (post.thumbnail_url || ''),
                         imageUrls: relationRowsReady && relationMedia.images.length ? relationMedia.images : legacyImages,
-                        views: relationRowsReady ? (relationMetrics.views ?? 0) : (post.views || 0)
+                        views: relationRowsReady ? (relationMetrics.views ?? 0) : (post.views || 0),
+                        likes: relationRowsReady ? (relationMetrics.likes_count ?? 0) : (post.likes || 0)
                     };
                 };
 
@@ -4779,7 +4816,7 @@
                         likesPercentage: p.likes_percentage || '0%', views: p.views || 0,
                         description: typeof relation.details.summary === 'string' ? relation.details.summary : (typeof p.description === 'string' ? p.description : ''),
                         studio: relation.details.studio_name || p.studio || '', series: relation.details.series_name || p.series || '',
-                        model_id: relation.starIds[0] || null, model_ids: relation.starIds, views: relation.views
+                        model_id: relation.starIds[0] || null, model_ids: relation.starIds, views: relation.views, likes: relation.likes
                     };
                     });
                     if (videoPosts.length) characterData = videoPosts;
@@ -4989,23 +5026,30 @@
         }
 
         async function openStandaloneWithSession(destinationUrl, destinationLabel) {
+            const target = new URL(destinationUrl, window.location.href);
+            if (target.origin === window.location.origin) {
+                window.location.assign(target.toString());
+                return;
+            }
             try {
-                const { data: { session } } = await supabaseClient.auth.getSession();
+                const session = await Promise.race([
+                    supabaseClient.auth.getSession().then(({ data }) => data?.session || null).catch(() => null),
+                    new Promise(resolve => setTimeout(() => resolve(null), 700))
+                ]);
                 if (!session?.access_token || !session?.refresh_token) {
-                    window.location.assign(destinationUrl);
+                    window.location.assign(target.toString());
                     return;
                 }
                 const encodedSession = encodeAuthTransfer(session);
                 if (!encodedSession) {
-                    window.location.assign(destinationUrl);
+                    window.location.assign(target.toString());
                     return;
                 }
-                const target = new URL(destinationUrl);
                 target.hash = new URLSearchParams({ [MIX_GOLD_AUTH_FRAGMENT_KEY]: encodedSession }).toString();
                 window.location.assign(target.toString());
             } catch (error) {
                 console.warn(`تعذر نقل جلسة الدخول إلى ${destinationLabel}:`, error);
-                window.location.assign(destinationUrl);
+                window.location.assign(target.toString());
             }
         }
 
@@ -5023,7 +5067,7 @@
                 navigateTo(page);
                 return;
             }
-            await openStandaloneWithSession(destinationUrl, getPageName(page) || page);
+            await openStandaloneWithSession(destinationUrl, getPageTitle(page) || page);
         }
 
         async function restoreTransferredAuthSession() {
@@ -5386,14 +5430,15 @@
             updateAuthUI();
         }
 
-        async function checkUserSession() {
-            await restoreTransferredAuthSession();
+        async function checkUserSession(options = {}) {
+            if (!options.skipTransfer) await restoreTransferredAuthSession();
             const { data: { session } } = await supabaseClient.auth.getSession();
             setLoggedIn(!!session);
             if (session) {
                 await fetchUserData();
                 resumePendingAuthAction();
             }
+            return session;
         }
 
         function cacheUserProfile(profile) {
@@ -5610,15 +5655,84 @@
             await completeAuthSuccess();
         }
 
-        async function modalLoginWithGoogle() {
-            persistPendingAuthForRedirect();
+        const GOOGLE_WEB_CLIENT_ID = '162387244484-4u97bc2fnab7l3q79g1fouqntjirk69j.apps.googleusercontent.com';
+        let googleIdentityInitialized = false;
+        let googleIdentityLoadPromise = null;
+
+        function getGoogleIdentityServices() {
+            if (window.google?.accounts?.id) return Promise.resolve(window.google.accounts.id);
+            if (googleIdentityLoadPromise) return googleIdentityLoadPromise;
+
+            googleIdentityLoadPromise = new Promise((resolve, reject) => {
+                const existingScript = document.querySelector('script[src^="https://accounts.google.com/gsi/client"]');
+                const script = existingScript || document.createElement('script');
+                const finishLoading = () => window.google?.accounts?.id
+                    ? resolve(window.google.accounts.id)
+                    : reject(new Error('تعذر تهيئة خدمة تسجيل الدخول من Google.'));
+
+                script.addEventListener('load', finishLoading, { once: true });
+                script.addEventListener('error', () => reject(new Error('تعذر تحميل خدمة تسجيل الدخول من Google.')), { once: true });
+                if (!existingScript) {
+                    script.src = 'https://accounts.google.com/gsi/client';
+                    script.async = true;
+                    script.defer = true;
+                    document.head.appendChild(script);
+                }
+                window.setTimeout(finishLoading, 4000);
+            });
+            return googleIdentityLoadPromise;
+        }
+
+        async function handleGoogleCredential(response) {
+            if (!response?.credential) {
+                alert('لم ترسل Google بيانات تسجيل الدخول. حاول مرة أخرى.');
+                return;
+            }
+            const { error } = await supabaseClient.auth.signInWithIdToken({
+                provider: 'google',
+                token: response.credential
+            });
+            if (error) {
+                alert('خطأ في تسجيل الدخول بجوجل: ' + error.message);
+                return;
+            }
+            await completeAuthSuccess();
+        }
+
+        async function continueWithGoogleOAuthRedirect() {
             const { error } = await supabaseClient.auth.signInWithOAuth({
                 provider: 'google',
                 options: { redirectTo: window.location.origin }
             });
-            if (error) {
-                alert('خطأ في تسجيل الدخول بجوجل: ' + error.message);
+            if (error) alert('خطأ في تسجيل الدخول بجوجل: ' + error.message);
+        }
+
+        async function loginWithGoogleOnDevice() {
+            persistPendingAuthForRedirect();
+            try {
+                const identity = await getGoogleIdentityServices();
+                if (!googleIdentityInitialized) {
+                    identity.initialize({
+                        client_id: GOOGLE_WEB_CLIENT_ID,
+                        callback: handleGoogleCredential,
+                        auto_select: false,
+                        use_fedcm_for_prompt: true
+                    });
+                    googleIdentityInitialized = true;
+                }
+                identity.prompt((notification) => {
+                    if (notification.isNotDisplayed?.() || notification.isSkippedMoment?.()) {
+                        continueWithGoogleOAuthRedirect();
+                    }
+                });
+            } catch (error) {
+                console.warn('Google Identity Services unavailable; using the redirect fallback.', error);
+                await continueWithGoogleOAuthRedirect();
             }
+        }
+
+        async function modalLoginWithGoogle() {
+            await loginWithGoogleOnDevice();
         }
 
         async function modalRegisterUser() {
@@ -6220,21 +6334,36 @@
             return 0;
         }
 
+        function parseAnimeSortMetric(value) {
+            if (typeof value === 'number' && Number.isFinite(value)) return value;
+            const matched = String(value ?? '').trim().replace(/,/g, '').toUpperCase()
+                .match(/^(-?\d+(?:\.\d+)?)\s*([KMB])?$/);
+            if (!matched) return 0;
+            const multipliers = { K: 1_000, M: 1_000_000, B: 1_000_000_000 };
+            return Number(matched[1]) * (multipliers[matched[2]] || 1);
+        }
+
+        function getAnimeAddedAt(item) {
+            const timestamp = new Date(item?.createdAt || item?.created_at || 0).getTime();
+            return Number.isFinite(timestamp) ? timestamp : 0;
+        }
+
+        function getAnimeRatingScore(item) {
+            const likes = parseAnimeSortMetric(item?.likes ?? item?.likesCount ?? item?.likes_count);
+            return likes > 0 ? likes : parseAnimeSortMetric(item?.likesPercentage);
+        }
+
         function advancedSortVideos(videosArray, sortType) {
             const sorted = [...videosArray];
             switch(sortType) {
                 case 'latest':
-                    return sorted;
+                    return sorted.sort((a, b) => getAnimeAddedAt(b) - getAnimeAddedAt(a));
                 case 'title':
                     return sorted.sort((a, b) => (a.title || a.name || '').localeCompare(b.title || b.name || ''));
                 case 'most_viewed':
-                    return sorted.sort((a, b) => b.views - a.views);
+                    return sorted.sort((a, b) => parseAnimeSortMetric(b.views) - parseAnimeSortMetric(a.views));
                 case 'top_rated':
-                    return sorted.sort((a, b) => {
-                        const aRate = parseFloat(a.likesPercentage) || 0;
-                        const bRate = parseFloat(b.likesPercentage) || 0;
-                        return bRate - aRate;
-                    });
+                    return sorted.sort((a, b) => getAnimeRatingScore(b) - getAnimeRatingScore(a));
                 case 'longest':
                     return sorted.sort((a, b) => {
                         return parseDurationToSeconds(b.duration) - parseDurationToSeconds(a.duration);
@@ -6400,12 +6529,63 @@
                 logo.style.display = 'block';
                 titleEl.style.display = 'none';
                 titleEl.textContent = '';
+                titleEl.style.removeProperty('--header-page-title-font-size');
+                titleEl.style.removeProperty('--header-page-title-max-width');
             } else {
                 logo.style.display = 'none';
                 titleEl.style.display = 'block';
-                titleEl.textContent = customTitle || getPageTitle(page);
+                const headerTitle = customTitle || getPageTitle(page);
+                const episodeMatch = String(headerTitle).trim().match(/^(.*?)(?:\s+)((?:الحلقة|حلقة)\s+\d+|(?:episode|ep\.)\s+\d+)$/i);
+                titleEl.replaceChildren();
+                if (episodeMatch) {
+                    const workSpan = document.createElement('span');
+                    workSpan.className = 'header-title-work';
+                    workSpan.textContent = episodeMatch[1].trim();
+                    const episodeSpan = document.createElement('span');
+                    episodeSpan.className = 'header-title-episode';
+                    episodeSpan.dir = /[\u0600-\u06FF]/.test(episodeMatch[2]) ? 'rtl' : 'ltr';
+                    episodeSpan.textContent = episodeMatch[2];
+                    titleEl.append(workSpan, document.createTextNode(' '), episodeSpan);
+                } else {
+                    titleEl.textContent = headerTitle;
+                }
+                fitHeaderPageTitle();
+                requestAnimationFrame(() => requestAnimationFrame(fitHeaderPageTitle));
             }
         }
+
+        function fitHeaderPageTitle() {
+            const titleEl = document.getElementById('header-page-title');
+            const header = titleEl?.closest('header');
+            if (!titleEl || !header || !titleEl.textContent.trim()) return;
+
+            titleEl.style.removeProperty('--header-page-title-font-size');
+            const isCompactScreen = window.matchMedia('(max-width: 480px)').matches;
+            const baseFontSize = isCompactScreen
+                ? 15
+                : (parseFloat(window.getComputedStyle(titleEl).fontSize) || 17.6);
+            const menuWidth = header.querySelector('.menu-toggle')?.offsetWidth || 0;
+            const searchWidth = header.querySelector('.header-controls')?.offsetWidth || 0;
+            const controlGap = isCompactScreen ? 12 : 44;
+            const availableWidth = Math.max(120, header.clientWidth - menuWidth - searchWidth - controlGap);
+
+            titleEl.style.setProperty('--header-page-title-max-width', 'none');
+            const naturalWidth = titleEl.scrollWidth;
+            const minimumFontSize = isCompactScreen ? 13 : 13;
+            const fittedFontSize = isCompactScreen
+                ? naturalWidth > availableWidth
+                    ? Math.max(minimumFontSize, Math.round((baseFontSize * availableWidth / naturalWidth) * 10) / 10)
+                    : baseFontSize
+                : naturalWidth > availableWidth
+                ? Math.max(minimumFontSize, Math.round((baseFontSize * availableWidth / naturalWidth) * 10) / 10)
+                : baseFontSize;
+
+            titleEl.style.setProperty('--header-page-title-max-width', `${Math.floor(availableWidth)}px`);
+            titleEl.style.setProperty('--header-page-title-font-size', `${fittedFontSize}px`);
+            titleEl.classList.toggle('header-title-fitted', fittedFontSize < baseFontSize);
+        }
+
+        window.addEventListener('resize', fitHeaderPageTitle);
 
         function pageHistoryPath(page) {
             return page === 'home' ? '/' : `/?page=${encodeURIComponent(page)}`;
@@ -6577,8 +6757,10 @@
                         <div class="menu-item dropdown-toggle${navLockClass('comics')}" onclick="${navClickHandler('comics', 'toggleComicsMenu()')}">
                             <div class="menu-icon"><i class="fas fa-book"></i></div>
                             <div class="menu-text">${t('comicsMenu')}</div>
-                            ${navLockIcon('comics')}
-                            <i class="fas fa-chevron-down dropdown-arrow"></i>
+                            <div class="comics-dropdown-controls">
+                                <i class="fas fa-chevron-down dropdown-arrow"></i>
+                                ${navLockIcon('comics')}
+                            </div>
                         </div>
                         <div class="dropdown-content" id="comics-categories">
                             <a class="menu-item sub-item" data-page="manga" href="https://mix-gold-jet-manga.vercel.app/" onclick="event.preventDefault(); openStandalonePage('manga')">
@@ -8105,8 +8287,11 @@
             const mangaReaderElE = document.getElementById('manga-reader-view'); if (mangaReaderElE) mangaReaderElE.classList.remove('active');
             document.querySelectorAll('.container').forEach(c => c.classList.remove('active'));
             document.getElementById('post-detail').classList.add('active');
+            updateSidebarActiveState('');
 
-            const title = cardElement.querySelector('.post-title')?.textContent || cardElement.dataset.name || '';
+            const titleMain = cardElement.querySelector('.post-title-main')?.textContent?.trim() || '';
+            const episodeTitle = cardElement.querySelector('.post-title-episode')?.textContent?.trim() || '';
+            const title = [titleMain, episodeTitle].filter(Boolean).join(' ') || cardElement.dataset.name || '';
             updateHeaderForPage('post-detail', title);
         }
 
@@ -9138,6 +9323,8 @@ function toggleSave(url, cardElement) {
 
         window.addEventListener('popstate', function () {
             clearPostPlayer();
+            const postDetail = document.getElementById('post-detail');
+            if (postDetail) postDetail.classList.remove('active');
             const route = getDirectRoute();
             const postSlug = route.post;
             const dlSlug = route.dl;
@@ -9742,12 +9929,7 @@ function toggleSave(url, cardElement) {
         }
 
         async function loginWithGoogle() {
-            persistPendingAuthForRedirect();
-            const { error } = await supabaseClient.auth.signInWithOAuth({
-                provider: 'google',
-                options: { redirectTo: window.location.origin }
-            });
-            if (error) alert('خطأ في تسجيل الدخول بجوجل: ' + error.message);
+            await loginWithGoogleOnDevice();
         }
 
         async function standardLogin() {
@@ -9845,9 +10027,13 @@ function toggleSave(url, cardElement) {
         }
 
         async function init() {
+            // صفحات Vercel المستقلة تقع على نطاقات مختلفة؛ استعد الجلسة المنقولة
+            // قبل تحميل المحتوى أو رسم القائمة كي لا يظهر الحساب كزائر مؤقتًا.
+            await restoreTransferredAuthSession();
             await loadDynamicContent();
             if (!darkMode) document.body.classList.add('light-mode');
             currentUserProfile = loadCachedUserProfile();
+            await checkUserSession({ skipTransfer: true });
             syncPostModelsToggle();
 
             setupFilterTypeSelect();
@@ -9890,7 +10076,6 @@ function toggleSave(url, cardElement) {
             else if (initialImg) openImageById(initialImg);
             else if (initialManga && initialCh) openMangaChapterById(initialManga, initialCh, initialPage);
             else if (initialManga) openMangaById(initialManga);
-            checkUserSession();
         }
         init();
     </script>

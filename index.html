@@ -5429,14 +5429,15 @@
             updateAuthUI();
         }
 
-        async function checkUserSession() {
-            await restoreTransferredAuthSession();
+        async function checkUserSession(options = {}) {
+            if (!options.skipTransfer) await restoreTransferredAuthSession();
             const { data: { session } } = await supabaseClient.auth.getSession();
             setLoggedIn(!!session);
             if (session) {
                 await fetchUserData();
                 resumePendingAuthAction();
             }
+            return session;
         }
 
         function cacheUserProfile(profile) {
@@ -10025,9 +10026,13 @@ function toggleSave(url, cardElement) {
         }
 
         async function init() {
+            // صفحات Vercel المستقلة تقع على نطاقات مختلفة؛ استعد الجلسة المنقولة
+            // قبل تحميل المحتوى أو رسم القائمة كي لا يظهر الحساب كزائر مؤقتًا.
+            await restoreTransferredAuthSession();
             await loadDynamicContent();
             if (!darkMode) document.body.classList.add('light-mode');
             currentUserProfile = loadCachedUserProfile();
+            await checkUserSession({ skipTransfer: true });
             syncPostModelsToggle();
 
             setupFilterTypeSelect();
@@ -10070,7 +10075,6 @@ function toggleSave(url, cardElement) {
             else if (initialImg) openImageById(initialImg);
             else if (initialManga && initialCh) openMangaChapterById(initialManga, initialCh, initialPage);
             else if (initialManga) openMangaById(initialManga);
-            checkUserSession();
         }
         init();
     </script>
