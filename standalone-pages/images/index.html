@@ -5026,6 +5026,26 @@
         }
 
         let navigationSession = null;
+        const MIX_GOLD_AGREEMENT_FRAGMENT_KEY = 'mixgold_agreement';
+
+        function getActiveAgreementTimestamp() {
+            const savedTime = localStorage.getItem('agreedToTerms');
+            const agreedTimestamp = Number.parseInt(savedTime || '', 10);
+            const twelveHours = 12 * 60 * 60 * 1000;
+            if (!Number.isFinite(agreedTimestamp) || Date.now() - agreedTimestamp > twelveHours) {
+                if (savedTime) localStorage.removeItem('agreedToTerms');
+                return null;
+            }
+            return agreedTimestamp;
+        }
+
+        function restoreTransferredAgreement(params) {
+            const transferredTime = Number.parseInt(params.get(MIX_GOLD_AGREEMENT_FRAGMENT_KEY) || '', 10);
+            const twelveHours = 12 * 60 * 60 * 1000;
+            if (Number.isFinite(transferredTime) && Date.now() - transferredTime <= twelveHours) {
+                localStorage.setItem('agreedToTerms', transferredTime.toString());
+            }
+        }
 
         function cacheNavigationSession(session) {
             navigationSession = session?.access_token && session?.refresh_token ? session : null;
@@ -5038,15 +5058,19 @@
                 window.location.assign(target.toString());
                 return;
             }
+            const transferParams = new URLSearchParams();
             const session = navigationSession;
             if (session) {
                 const encodedSession = encodeAuthTransfer(session);
                 if (encodedSession) {
-                    target.hash = new URLSearchParams({ [MIX_GOLD_AUTH_FRAGMENT_KEY]: encodedSession }).toString();
+                    transferParams.set(MIX_GOLD_AUTH_FRAGMENT_KEY, encodedSession);
                 } else {
                     console.warn(`تعذر تجهيز جلسة الدخول للانتقال إلى ${destinationLabel}.`);
                 }
             }
+            const agreementTimestamp = getActiveAgreementTimestamp();
+            if (agreementTimestamp) transferParams.set(MIX_GOLD_AGREEMENT_FRAGMENT_KEY, agreementTimestamp.toString());
+            if (transferParams.size) target.hash = transferParams.toString();
             window.location.assign(target.toString());
         }
 
@@ -5069,8 +5093,14 @@
 
         async function restoreTransferredAuthSession() {
             const params = new URLSearchParams(window.location.hash.slice(1));
+            restoreTransferredAgreement(params);
             const encodedSession = params.get(MIX_GOLD_AUTH_FRAGMENT_KEY);
-            if (!encodedSession) return;
+            if (!encodedSession) {
+                if (params.has(MIX_GOLD_AGREEMENT_FRAGMENT_KEY)) {
+                    history.replaceState(null, document.title, window.location.pathname + window.location.search);
+                }
+                return;
+            }
 
             try {
                 const session = decodeAuthTransfer(encodedSession);
@@ -5355,16 +5385,7 @@
         }
 
         function checkAgreement() {
-            const savedTime = localStorage.getItem('agreedToTerms');
-            if (!savedTime) {
-                document.getElementById('agreement-overlay').classList.add('active');
-                return;
-            }
-            const agreedTimestamp = parseInt(savedTime, 10);
-            const now = Date.now();
-            const twelveHours = 12 * 60 * 60 * 1000;
-            if (now - agreedTimestamp > twelveHours) {
-                localStorage.removeItem('agreedToTerms');
+            if (!getActiveAgreementTimestamp()) {
                 document.getElementById('agreement-overlay').classList.add('active');
             }
         }
