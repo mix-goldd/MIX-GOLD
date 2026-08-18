@@ -179,3 +179,8 @@
 - أكد المستخدم من إعدادات المشروع أن Root Directory المحفوظ حاليًا هو المسار الصحيح `standalone-pages/notifications`.
 - أُعيد نشر المشروع يدويًا بعد حفظ الإعداد، وتحولت النشرة الجديدة إلى `Ready` و`Current` في بيئة Production؛ أظهرت معاينتها صفحة Notifications وطبقة Agreement.
 - الفحص الخارجي النهائي للرابط الرسمي `https://mix-gold-jet-notifications.vercel.app/` أكد وجود `mixgold_agreement` وعلامة الصفحة `data-page="notifications"`، وبذلك وصلت النسخة الجديدة إلى Notifications أيضًا.
+
+## اختبار وصول صفحة مستقلة بعد النشر — 18 أغسطس 2026
+
+- فُتح نطاق Settings الرسمي `https://mix-gold-jet-settings.vercel.app/?page=settings` بعد النشر النهائي، وأكدت واجهة الصفحة المستخرجة ظهور أقسام Settings الفعلية (`General` و`Dark Mode` و`Language` و`Developer`) وروابط القائمة الجانبية الرسمية.
+- يظهر عارض التحقق الآلي لقطة تحميل داكنة رغم اكتمال عناصر الصفحة في المتصفح؛ لذلك يُعامل هذا كتحقق تقني من الوصول والمحتوى، وليس بديلًا عن اختبار اللمس على هاتف المستخدم لكل عناصر القائمة.
