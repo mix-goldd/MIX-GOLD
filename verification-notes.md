@@ -172,3 +172,10 @@
 - دُفع Commit التحفيز `6538091` إلى فرع GitHub `main` بعد توليد 13 صفحة مستقلة من ملف الموقع الحالي. اجتازت اختبارات المشروع 35 اختبارًا ونجح بناء الإنتاج قبل الدفع.
 - وصلت علامة `mixgold_agreement` إلى صفحات `settings`, `profile`, `anime`, `manga`, `manhwa`, `images`, `stars`, `studios`, `series` و`login` خلال النشر المتدرج؛ وبذلك تستقبل هذه الصفحات الآن أحدث منطق نقل Agreement.
 - صفحة `notifications` ما زالت تعرض النسخة السابقة بعد المهلة، رغم أن المصدر الحي يؤكد أنها صفحة Notifications الصحيحة. يلزم إعادة نشرها يدويًا من لوحة Vercel أو مراجعة ارتباطها بالفرع `main` قبل اعتمادها ضمن النسخ المحدثة.
+
+## إصلاح نشر Notifications والتحقق النهائي — 18 أغسطس 2026
+
+- أظهر سجل بناء Vercel أن النشرتين التحفيزيتين فشلتا لأنهما حاولتا استخدام المسار القديم `pages/notifications`، وهو مجلد غير موجود في المستودع.
+- أكد المستخدم من إعدادات المشروع أن Root Directory المحفوظ حاليًا هو المسار الصحيح `standalone-pages/notifications`.
+- أُعيد نشر المشروع يدويًا بعد حفظ الإعداد، وتحولت النشرة الجديدة إلى `Ready` و`Current` في بيئة Production؛ أظهرت معاينتها صفحة Notifications وطبقة Agreement.
+- الفحص الخارجي النهائي للرابط الرسمي `https://mix-gold-jet-notifications.vercel.app/` أكد وجود `mixgold_agreement` وعلامة الصفحة `data-page="notifications"`، وبذلك وصلت النسخة الجديدة إلى Notifications أيضًا.
