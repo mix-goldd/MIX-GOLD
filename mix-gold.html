@@ -81,6 +81,51 @@
             flex-direction: column;
         }
 
+        .ad-test-native-banner {
+            margin: 18px 0 22px;
+            padding: 12px;
+            border: 1px solid rgba(255, 71, 87, 0.26);
+            border-radius: 12px;
+            background: rgba(30, 30, 30, 0.7);
+            overflow: hidden;
+        }
+
+        .ad-test-native-banner__label {
+            margin: 0 0 9px;
+            color: #a9a9a9;
+            font-size: 0.72rem;
+            font-weight: 700;
+            letter-spacing: 0.04em;
+            text-align: center;
+            text-transform: uppercase;
+        }
+
+        .ad-test-native-banner__slot {
+            min-height: 90px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.035);
+        }
+
+        .ad-test-native-banner__slot > div {
+            width: 100%;
+            min-height: 90px;
+        }
+
+        .ad-test-native-banner__status {
+            position: absolute;
+            color: #898989;
+            font-size: 0.72rem;
+            pointer-events: none;
+        }
+
+        .light-mode .ad-test-native-banner {
+            background: rgba(245, 245, 245, 0.92);
+            border-color: rgba(255, 71, 87, 0.22);
+        }
+
         header {
             display: flex;
             justify-content: space-between;
@@ -4966,19 +5011,19 @@
         const MIX_GOLD_AUTH_FRAGMENT_KEY = 'mixgold_auth';
         const MIX_GOLD_STANDALONE_PAGES = Object.freeze({
             home: 'https://mix-goldd.vercel.app/',
-            videos: 'https://mix-gold-jet-anime.vercel.app/',
-            manga: 'https://mix-gold-jet-manga.vercel.app/',
-            manhwa: 'https://mix-gold-jet-manhwa.vercel.app/',
-            models: 'https://mix-gold-jet-stars.vercel.app/',
-            images: 'https://mix-gold-jet-images.vercel.app/',
-            studios: 'https://mix-gold-jet-studios.vercel.app/',
-            series: 'https://mix-gold-jet-series.vercel.app/',
-            saved: 'https://mix-gold-jet-saved.vercel.app/',
-            notifications: 'https://mix-gold-jet-notifications.vercel.app/',
-            'watch-history': 'https://mix-gold-jet-watch-history.vercel.app/',
-            settings: 'https://mix-gold-jet-settings.vercel.app/',
-            profile: 'https://mix-gold-jet-profile.vercel.app/',
-            login: 'https://mix-gold-jet-login.vercel.app/'
+            videos: 'https://mix-goldd-anime.vercel.app/',
+            manga: 'https://mix-goldd-manga.vercel.app/',
+            manhwa: 'https://mix-goldd-manhwa.vercel.app/',
+            models: 'https://mix-goldd-stars.vercel.app/',
+            images: 'https://mix-goldd-images.vercel.app/',
+            studios: 'https://mix-goldd-studios.vercel.app/',
+            series: 'https://mix-goldd-series.vercel.app/',
+            saved: 'https://mix-goldd-saved.vercel.app/',
+            notifications: 'https://mix-goldd-notifications.vercel.app/',
+            'watch-history': 'https://mix-goldd-watch-history.vercel.app/',
+            settings: 'https://mix-goldd-settings.vercel.app/',
+            profile: 'https://mix-goldd-profile.vercel.app/',
+            login: 'https://mix-goldd-login.vercel.app/'
         });
 
         function encodeAuthTransfer(session) {
@@ -6748,10 +6793,10 @@
                             <i class="fas fa-chevron-down dropdown-arrow"></i>
                         </div>
                         <div class="dropdown-content" id="studio-categories">
-                            <a class="menu-item sub-item" data-page="studios" href="https://mix-gold-jet-studios.vercel.app/" onclick="event.preventDefault(); openStandalonePage('studios')">
+                            <a class="menu-item sub-item" data-page="studios" href="https://mix-goldd-studios.vercel.app/" onclick="event.preventDefault(); openStandalonePage('studios')">
                                 <div class="menu-text">${t('studios')}</div>
                             </a>
-                            <a class="menu-item sub-item" data-page="series" href="https://mix-gold-jet-series.vercel.app/" onclick="event.preventDefault(); openStandalonePage('series')">
+                            <a class="menu-item sub-item" data-page="series" href="https://mix-goldd-series.vercel.app/" onclick="event.preventDefault(); openStandalonePage('series')">
                                 <div class="menu-text">${t('series')}</div>
                             </a>`;
             if (grouped.studio.length > 0) {
@@ -6766,12 +6811,12 @@
             html += `
                         </div>
                     </div>
-                    <a class="menu-item${navLockClass('models')}" data-page="models" href="https://mix-gold-jet-stars.vercel.app/" onclick="event.preventDefault(); ${navClickHandler('models', "openStandalonePage('models')")}">
+                    <a class="menu-item${navLockClass('models')}" data-page="models" href="https://mix-goldd-stars.vercel.app/" onclick="event.preventDefault(); ${navClickHandler('models', "openStandalonePage('models')")}">
                         <div class="menu-icon"><i class="fas fa-star"></i></div>
                         <div class="menu-text">${t('models')}</div>
                         ${navLockIcon('models')}
                     </a>
-                    <a class="menu-item${navLockClass('pulsex')}" data-page="images" href="https://mix-gold-jet-images.vercel.app/" onclick="event.preventDefault(); ${navClickHandler('pulsex', "openStandalonePage('images')")}">
+                    <a class="menu-item${navLockClass('pulsex')}" data-page="images" href="https://mix-goldd-images.vercel.app/" onclick="event.preventDefault(); ${navClickHandler('pulsex', "openStandalonePage('images')")}">
                         <div class="menu-icon"><i class="fas fa-images"></i></div>
                         <div class="menu-text">PulseX</div>
                         ${navLockIcon('pulsex')}
@@ -6786,10 +6831,10 @@
                             </div>
                         </div>
                         <div class="dropdown-content" id="comics-categories">
-                            <a class="menu-item sub-item" data-page="manga" href="https://mix-gold-jet-manga.vercel.app/" onclick="event.preventDefault(); openStandalonePage('manga')">
+                            <a class="menu-item sub-item" data-page="manga" href="https://mix-goldd-manga.vercel.app/" onclick="event.preventDefault(); openStandalonePage('manga')">
                                 <div class="menu-text">Manga</div>
                             </a>
-                            <a class="menu-item sub-item" data-page="manhwa" href="https://mix-gold-jet-manhwa.vercel.app/" onclick="event.preventDefault(); openStandalonePage('manhwa')">
+                            <a class="menu-item sub-item" data-page="manhwa" href="https://mix-goldd-manhwa.vercel.app/" onclick="event.preventDefault(); openStandalonePage('manhwa')">
                                 <div class="menu-text">Manhwa</div>
                             </a>`;
             if (grouped.comics.length > 0) {
@@ -6804,20 +6849,20 @@
             html += `
                         </div>
                     </div>
-                    <a class="menu-item${navLockClass('saved')}" data-page="saved" href="https://mix-gold-jet-saved.vercel.app/" onclick="event.preventDefault(); if (isNavLocked('saved')) { showLockedNotice('saved'); } else { openSavedStandalone(); }">
+                    <a class="menu-item${navLockClass('saved')}" data-page="saved" href="https://mix-goldd-saved.vercel.app/" onclick="event.preventDefault(); if (isNavLocked('saved')) { showLockedNotice('saved'); } else { openSavedStandalone(); }">
                         <div class="menu-icon"><i class="fas fa-bookmark"></i></div>
                         <div class="menu-text">${t('saved')}</div>
                         ${navLockIcon('saved')}
                     </a>`;
             if (isLoggedIn === true) {
                 html += `
-                    <a class="menu-item${navLockClass('notifications')}" data-page="notifications" href="https://mix-gold-jet-notifications.vercel.app/" onclick="event.preventDefault(); ${navClickHandler('notifications', "openStandalonePage('notifications')")}">
+                    <a class="menu-item${navLockClass('notifications')}" data-page="notifications" href="https://mix-goldd-notifications.vercel.app/" onclick="event.preventDefault(); ${navClickHandler('notifications', "openStandalonePage('notifications')")}">
                         <div class="menu-icon"><i class="fas fa-bell"></i></div>
                         <div class="menu-text">${t('notifications')}</div>
                         ${navLockIcon('notifications')}
                         <span class="sidebar-notif-badge" id="sidebar-notif-badge">0</span>
                     </a>
-                    <a class="menu-item${navLockClass('watch-history')}" data-page="watch-history" href="https://mix-gold-jet-watch-history.vercel.app/" onclick="event.preventDefault(); ${navClickHandler('watch-history', "openStandalonePage('watch-history')")}">
+                    <a class="menu-item${navLockClass('watch-history')}" data-page="watch-history" href="https://mix-goldd-watch-history.vercel.app/" onclick="event.preventDefault(); ${navClickHandler('watch-history', "openStandalonePage('watch-history')")}">
                         <div class="menu-icon"><i class="fas fa-clock-rotate-left"></i></div>
                         <div class="menu-text">${t('watchHistory')}</div>
                         ${navLockIcon('watch-history')}
@@ -6843,7 +6888,7 @@
                 </div>
                 <div class="menu-section">
                     <div class="section-header">${t('settings')}</div>
-                    <a class="menu-item${navLockClass('settings')}" data-page="settings" href="https://mix-gold-jet-settings.vercel.app/" onclick="event.preventDefault(); ${navClickHandler('settings', "openStandalonePage('settings')")}">
+                    <a class="menu-item${navLockClass('settings')}" data-page="settings" href="https://mix-goldd-settings.vercel.app/" onclick="event.preventDefault(); ${navClickHandler('settings', "openStandalonePage('settings')")}">
                         <div class="menu-icon"><i class="fas fa-cog"></i></div>
                         <div class="menu-text">${t('settings')}</div>
                         ${navLockIcon('settings')}
@@ -7416,6 +7461,41 @@
             return div;
         }
 
+        function appendAdTestNativeBanner(container) {
+            const section = document.createElement('section');
+            section.className = 'ad-test-native-banner';
+            section.dataset.adTest = 'native-banner-036b4082c363162ca973ad141a4b295a';
+            section.setAttribute('aria-label', currentLanguage === 'ar' ? 'إعلان تجريبي' : 'Test advertisement');
+
+            const label = document.createElement('p');
+            label.className = 'ad-test-native-banner__label';
+            label.textContent = currentLanguage === 'ar' ? 'إعلان تجريبي' : 'Test advertisement';
+
+            const slot = document.createElement('div');
+            slot.id = 'container-036b4082c363162ca973ad141a4b295a';
+
+            const slotFrame = document.createElement('div');
+            slotFrame.className = 'ad-test-native-banner__slot';
+            slotFrame.style.position = 'relative';
+
+            const status = document.createElement('span');
+            status.className = 'ad-test-native-banner__status';
+            status.textContent = currentLanguage === 'ar' ? 'مساحة Native Banner التجريبية' : 'Native Banner test slot';
+
+            slotFrame.appendChild(status);
+            slotFrame.appendChild(slot);
+
+            const script = document.createElement('script');
+            script.async = true;
+            script.dataset.cfasync = 'false';
+            script.src = 'https://pl30925757.effectivecpmnetwork.com/036b4082c363162ca973ad141a4b295a/invoke.js';
+
+            section.appendChild(label);
+            section.appendChild(slotFrame);
+            section.appendChild(script);
+            container.appendChild(section);
+        }
+
         function renderHome() {
             const container = document.getElementById('home-view');
             container.innerHTML = '';
@@ -7474,6 +7554,9 @@
                     hydrateRealCardLikePercentages(grid);
                 }
             }
+
+            // إعلان الاختبار يظهر في الصفحة الرئيسية المنسوخة فقط، بين الفيديو والصور.
+            appendAdTestNativeBanner(container);
             
             if (showImages) {
                 const sorted = currentAdvancedSort === 'random' ? shuffleArray([...images]) : images;

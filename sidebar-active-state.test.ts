@@ -42,8 +42,8 @@ describe("حالة القائمة الجانبية", () => {
   });
 
   it("يعرّف روابط Vercel المستقلة للإعدادات وسجل المشاهدات ويحافظ على الجلسة عند فتحها", () => {
-    expect(source).toContain("settings: 'https://mix-gold-jet-settings.vercel.app/'");
-    expect(source).toContain("'watch-history': 'https://mix-gold-jet-watch-history.vercel.app/'");
+    expect(source).toContain("settings: 'https://mix-goldd-settings.vercel.app/'");
+    expect(source).toContain("'watch-history': 'https://mix-goldd-watch-history.vercel.app/'");
     expect(source).toContain("function openStandalonePage(page)");
     expect(source).toContain("openStandaloneWithSession(destinationUrl, getPageTitle(page) || page);");
     expect(source).not.toContain("getPageName(page)");

@@ -4990,19 +4990,19 @@
         const MIX_GOLD_AUTH_FRAGMENT_KEY = 'mixgold_auth';
         const MIX_GOLD_STANDALONE_PAGES = Object.freeze({
             home: 'https://mix-goldd.vercel.app/',
-            videos: 'https://mix-gold-jet-anime.vercel.app/',
-            manga: 'https://mix-gold-jet-manga.vercel.app/',
-            manhwa: 'https://mix-gold-jet-manhwa.vercel.app/',
-            models: 'https://mix-gold-jet-stars.vercel.app/',
-            images: 'https://mix-gold-jet-images.vercel.app/',
-            studios: 'https://mix-gold-jet-studios.vercel.app/',
-            series: 'https://mix-gold-jet-series.vercel.app/',
-            saved: 'https://mix-gold-jet-saved.vercel.app/',
-            notifications: 'https://mix-gold-jet-notifications.vercel.app/',
-            'watch-history': 'https://mix-gold-jet-watch-history.vercel.app/',
-            settings: 'https://mix-gold-jet-settings.vercel.app/',
-            profile: 'https://mix-gold-jet-profile.vercel.app/',
-            login: 'https://mix-gold-jet-login.vercel.app/'
+            videos: 'https://mix-goldd-anime.vercel.app/',
+            manga: 'https://mix-goldd-manga.vercel.app/',
+            manhwa: 'https://mix-goldd-manhwa.vercel.app/',
+            models: 'https://mix-goldd-stars.vercel.app/',
+            images: 'https://mix-goldd-images.vercel.app/',
+            studios: 'https://mix-goldd-studios.vercel.app/',
+            series: 'https://mix-goldd-series.vercel.app/',
+            saved: 'https://mix-goldd-saved.vercel.app/',
+            notifications: 'https://mix-goldd-notifications.vercel.app/',
+            'watch-history': 'https://mix-goldd-watch-history.vercel.app/',
+            settings: 'https://mix-goldd-settings.vercel.app/',
+            profile: 'https://mix-goldd-profile.vercel.app/',
+            login: 'https://mix-goldd-login.vercel.app/'
         });
 
         function encodeAuthTransfer(session) {
@@ -6772,10 +6772,10 @@
                             <i class="fas fa-chevron-down dropdown-arrow"></i>
                         </div>
                         <div class="dropdown-content" id="studio-categories">
-                            <a class="menu-item sub-item" data-page="studios" href="https://mix-gold-jet-studios.vercel.app/" onclick="event.preventDefault(); openStandalonePage('studios')">
+                            <a class="menu-item sub-item" data-page="studios" href="https://mix-goldd-studios.vercel.app/" onclick="event.preventDefault(); openStandalonePage('studios')">
                                 <div class="menu-text">${t('studios')}</div>
                             </a>
-                            <a class="menu-item sub-item" data-page="series" href="https://mix-gold-jet-series.vercel.app/" onclick="event.preventDefault(); openStandalonePage('series')">
+                            <a class="menu-item sub-item" data-page="series" href="https://mix-goldd-series.vercel.app/" onclick="event.preventDefault(); openStandalonePage('series')">
                                 <div class="menu-text">${t('series')}</div>
                             </a>`;
             if (grouped.studio.length > 0) {
@@ -6790,12 +6790,12 @@
             html += `
                         </div>
                     </div>
-                    <a class="menu-item${navLockClass('models')}" data-page="models" href="https://mix-gold-jet-stars.vercel.app/" onclick="event.preventDefault(); ${navClickHandler('models', "openStandalonePage('models')")}">
+                    <a class="menu-item${navLockClass('models')}" data-page="models" href="https://mix-goldd-stars.vercel.app/" onclick="event.preventDefault(); ${navClickHandler('models', "openStandalonePage('models')")}">
                         <div class="menu-icon"><i class="fas fa-star"></i></div>
                         <div class="menu-text">${t('models')}</div>
                         ${navLockIcon('models')}
                     </a>
-                    <a class="menu-item${navLockClass('pulsex')}" data-page="images" href="https://mix-gold-jet-images.vercel.app/" onclick="event.preventDefault(); ${navClickHandler('pulsex', "openStandalonePage('images')")}">
+                    <a class="menu-item${navLockClass('pulsex')}" data-page="images" href="https://mix-goldd-images.vercel.app/" onclick="event.preventDefault(); ${navClickHandler('pulsex', "openStandalonePage('images')")}">
                         <div class="menu-icon"><i class="fas fa-images"></i></div>
                         <div class="menu-text">PulseX</div>
                         ${navLockIcon('pulsex')}
@@ -6810,10 +6810,10 @@
                             </div>
                         </div>
                         <div class="dropdown-content" id="comics-categories">
-                            <a class="menu-item sub-item" data-page="manga" href="https://mix-gold-jet-manga.vercel.app/" onclick="event.preventDefault(); openStandalonePage('manga')">
+                            <a class="menu-item sub-item" data-page="manga" href="https://mix-goldd-manga.vercel.app/" onclick="event.preventDefault(); openStandalonePage('manga')">
                                 <div class="menu-text">Manga</div>
                             </a>
-                            <a class="menu-item sub-item" data-page="manhwa" href="https://mix-gold-jet-manhwa.vercel.app/" onclick="event.preventDefault(); openStandalonePage('manhwa')">
+                            <a class="menu-item sub-item" data-page="manhwa" href="https://mix-goldd-manhwa.vercel.app/" onclick="event.preventDefault(); openStandalonePage('manhwa')">
                                 <div class="menu-text">Manhwa</div>
                             </a>`;
             if (grouped.comics.length > 0) {
@@ -6828,20 +6828,20 @@
             html += `
                         </div>
                     </div>
-                    <a class="menu-item${navLockClass('saved')}" data-page="saved" href="https://mix-gold-jet-saved.vercel.app/" onclick="event.preventDefault(); if (isNavLocked('saved')) { showLockedNotice('saved'); } else { openSavedStandalone(); }">
+                    <a class="menu-item${navLockClass('saved')}" data-page="saved" href="https://mix-goldd-saved.vercel.app/" onclick="event.preventDefault(); if (isNavLocked('saved')) { showLockedNotice('saved'); } else { openSavedStandalone(); }">
                         <div class="menu-icon"><i class="fas fa-bookmark"></i></div>
                         <div class="menu-text">${t('saved')}</div>
                         ${navLockIcon('saved')}
                     </a>`;
             if (isLoggedIn === true) {
                 html += `
-                    <a class="menu-item${navLockClass('notifications')}" data-page="notifications" href="https://mix-gold-jet-notifications.vercel.app/" onclick="event.preventDefault(); ${navClickHandler('notifications', "openStandalonePage('notifications')")}">
+                    <a class="menu-item${navLockClass('notifications')}" data-page="notifications" href="https://mix-goldd-notifications.vercel.app/" onclick="event.preventDefault(); ${navClickHandler('notifications', "openStandalonePage('notifications')")}">
                         <div class="menu-icon"><i class="fas fa-bell"></i></div>
                         <div class="menu-text">${t('notifications')}</div>
                         ${navLockIcon('notifications')}
                         <span class="sidebar-notif-badge" id="sidebar-notif-badge">0</span>
                     </a>
-                    <a class="menu-item${navLockClass('watch-history')}" data-page="watch-history" href="https://mix-gold-jet-watch-history.vercel.app/" onclick="event.preventDefault(); ${navClickHandler('watch-history', "openStandalonePage('watch-history')")}">
+                    <a class="menu-item${navLockClass('watch-history')}" data-page="watch-history" href="https://mix-goldd-watch-history.vercel.app/" onclick="event.preventDefault(); ${navClickHandler('watch-history', "openStandalonePage('watch-history')")}">
                         <div class="menu-icon"><i class="fas fa-clock-rotate-left"></i></div>
                         <div class="menu-text">${t('watchHistory')}</div>
                         ${navLockIcon('watch-history')}
@@ -6867,7 +6867,7 @@
                 </div>
                 <div class="menu-section">
                     <div class="section-header">${t('settings')}</div>
-                    <a class="menu-item${navLockClass('settings')}" data-page="settings" href="https://mix-gold-jet-settings.vercel.app/" onclick="event.preventDefault(); ${navClickHandler('settings', "openStandalonePage('settings')")}">
+                    <a class="menu-item${navLockClass('settings')}" data-page="settings" href="https://mix-goldd-settings.vercel.app/" onclick="event.preventDefault(); ${navClickHandler('settings', "openStandalonePage('settings')")}">
                         <div class="menu-icon"><i class="fas fa-cog"></i></div>
                         <div class="menu-text">${t('settings')}</div>
                         ${navLockIcon('settings')}
