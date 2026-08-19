@@ -81,6 +81,30 @@
             flex-direction: column;
         }
 
+        .ad-test-native-banner {
+            margin: 18px 0 22px;
+            padding: 12px;
+            border: 1px solid rgba(255, 71, 87, 0.26);
+            border-radius: 12px;
+            background: rgba(30, 30, 30, 0.7);
+            overflow: hidden;
+        }
+
+        .ad-test-native-banner__label {
+            margin: 0 0 9px;
+            color: #a9a9a9;
+            font-size: 0.72rem;
+            font-weight: 700;
+            letter-spacing: 0.04em;
+            text-align: center;
+            text-transform: uppercase;
+        }
+
+        .light-mode .ad-test-native-banner {
+            background: rgba(245, 245, 245, 0.92);
+            border-color: rgba(255, 71, 87, 0.22);
+        }
+
         header {
             display: flex;
             justify-content: space-between;
@@ -7416,6 +7440,30 @@
             return div;
         }
 
+        function appendAdTestNativeBanner(container) {
+            const section = document.createElement('section');
+            section.className = 'ad-test-native-banner';
+            section.dataset.adTest = 'native-banner-036b4082c363162ca973ad141a4b295a';
+            section.setAttribute('aria-label', currentLang === 'ar' ? 'إعلان تجريبي' : 'Test advertisement');
+
+            const label = document.createElement('p');
+            label.className = 'ad-test-native-banner__label';
+            label.textContent = currentLang === 'ar' ? 'إعلان تجريبي' : 'Test advertisement';
+
+            const slot = document.createElement('div');
+            slot.id = 'container-036b4082c363162ca973ad141a4b295a';
+
+            const script = document.createElement('script');
+            script.async = true;
+            script.dataset.cfasync = 'false';
+            script.src = 'https://pl30925757.effectivecpmnetwork.com/036b4082c363162ca973ad141a4b295a/invoke.js';
+
+            section.appendChild(label);
+            section.appendChild(slot);
+            section.appendChild(script);
+            container.appendChild(section);
+        }
+
         function renderHome() {
             const container = document.getElementById('home-view');
             container.innerHTML = '';
@@ -7474,6 +7522,9 @@
                     hydrateRealCardLikePercentages(grid);
                 }
             }
+
+            // إعلان الاختبار يظهر في الصفحة الرئيسية المنسوخة فقط، بين الفيديو والصور.
+            appendAdTestNativeBanner(container);
             
             if (showImages) {
                 const sorted = currentAdvancedSort === 'random' ? shuffleArray([...images]) : images;
