@@ -2675,6 +2675,11 @@
             display: block;
             max-width: 100%;
         }
+        .pixiv-ad-slot [id^="container-"] {
+            width: 100%;
+            max-width: 100%;
+            overflow: hidden;
+        }
         @media (max-width: 600px) {
             .pixiv-action-bar {
                 padding: 10px 14px;
@@ -4305,6 +4310,8 @@
                 </button>
             </div>
 
+            <div id="post-native-ad-slot" class="pixiv-ad-slot" data-post-native-ad-slot></div>
+
             <div class="suggested-related-section">
                 <div class="sr-tabs">
                     <button class="sr-tab active" id="sr-tab-related" onclick="switchSuggestedRelatedTab('related')">Related</button>
@@ -4930,10 +4937,10 @@
         let mangaReaderDirection = localStorage.getItem('mangaReaderDirection') || 'ltr';
         let followedManga = JSON.parse(localStorage.getItem('mangaFollows')) || [];
 
-        const ADSTERRA_KEY = 'YOUR_ADSTERRA_ZONE_KEY_HERE';
-        const ADSTERRA_WIDTH = 300;
-        const ADSTERRA_HEIGHT = 250;
-        const AD_FREQUENCY = 3;
+        const ADSTERRA_NATIVE_BANNER_SRC = 'https://pl30915590.effectivecpmnetwork.com/1613a422de32b05110d97f825af90bc1/invoke.js';
+        const ADSTERRA_NATIVE_BANNER_CONTAINER_ID = 'container-1613a422de32b05110d97f825af90bc1';
+        const ADSTERRA_SOCIAL_BAR_SRC = 'https://pl30915606.effectivecpmnetwork.com/8f/d0/9a/8fd09a90e1362ca968d08563dbdcfb69.js';
+        const AD_FREQUENCY = 8;
 
 
         let isLoggedIn = false;
@@ -5024,8 +5031,10 @@
             }
         }
 
-        let navigationSession = null;
-        const MIX_GOLD_AGREEMENT_FRAGMENT_KEY = 'mixgold_agreement';
+	        let navigationSession = null;
+	        const MIX_GOLD_AGREEMENT_FRAGMENT_KEY = 'mixgold_agreement';
+	        const MIX_GOLD_SOCIAL_BAR_FRAGMENT_KEY = 'mixgold_socialbar';
+	        const MIX_GOLD_SOCIAL_BAR_SESSION_KEY = 'mixgold_social_bar_seen_v1';
 
         function getActiveAgreementTimestamp() {
             const savedTime = localStorage.getItem('agreedToTerms');
@@ -5038,13 +5047,33 @@
             return agreedTimestamp;
         }
 
-        function restoreTransferredAgreement(params) {
-            const transferredTime = Number.parseInt(params.get(MIX_GOLD_AGREEMENT_FRAGMENT_KEY) || '', 10);
-            const twelveHours = 12 * 60 * 60 * 1000;
-            if (Number.isFinite(transferredTime) && Date.now() - transferredTime <= twelveHours) {
-                localStorage.setItem('agreedToTerms', transferredTime.toString());
-            }
-        }
+	        function restoreTransferredAgreement(params) {
+	            const transferredTime = Number.parseInt(params.get(MIX_GOLD_AGREEMENT_FRAGMENT_KEY) || '', 10);
+	            const twelveHours = 12 * 60 * 60 * 1000;
+	            if (Number.isFinite(transferredTime) && Date.now() - transferredTime <= twelveHours) {
+	                localStorage.setItem('agreedToTerms', transferredTime.toString());
+	            }
+	        }
+
+	        function hasSeenSocialBarInVisit() {
+	            try {
+	                return sessionStorage.getItem(MIX_GOLD_SOCIAL_BAR_SESSION_KEY) === '1';
+	            } catch (error) {
+	                return false;
+	            }
+	        }
+
+	        function markSocialBarSeenInVisit() {
+	            try {
+	                sessionStorage.setItem(MIX_GOLD_SOCIAL_BAR_SESSION_KEY, '1');
+	            } catch (error) {
+	                // إذا منع المتصفح التخزين، يمنع وجود الوسم نفسه التكرار على مستوى الصفحة.
+	            }
+	        }
+
+	        function restoreTransferredSocialBar(params) {
+	            if (params.get(MIX_GOLD_SOCIAL_BAR_FRAGMENT_KEY) === '1') markSocialBarSeenInVisit();
+	        }
 
         function cacheNavigationSession(session) {
             navigationSession = session?.access_token && session?.refresh_token ? session : null;
@@ -5067,9 +5096,10 @@
                     console.warn(`تعذر تجهيز جلسة الدخول للانتقال إلى ${destinationLabel}.`);
                 }
             }
-            const agreementTimestamp = getActiveAgreementTimestamp();
-            if (agreementTimestamp) transferParams.set(MIX_GOLD_AGREEMENT_FRAGMENT_KEY, agreementTimestamp.toString());
-            if (transferParams.size) target.hash = transferParams.toString();
+	            const agreementTimestamp = getActiveAgreementTimestamp();
+	            if (agreementTimestamp) transferParams.set(MIX_GOLD_AGREEMENT_FRAGMENT_KEY, agreementTimestamp.toString());
+	            if (hasSeenSocialBarInVisit()) transferParams.set(MIX_GOLD_SOCIAL_BAR_FRAGMENT_KEY, '1');
+	            if (transferParams.size) target.hash = transferParams.toString();
             window.location.assign(target.toString());
         }
 
@@ -5090,14 +5120,15 @@
             openStandaloneWithSession(destinationUrl, getPageTitle(page) || page);
         }
 
-        async function restoreTransferredAuthSession() {
-            const params = new URLSearchParams(window.location.hash.slice(1));
-            restoreTransferredAgreement(params);
-            const encodedSession = params.get(MIX_GOLD_AUTH_FRAGMENT_KEY);
-            if (!encodedSession) {
-                if (params.has(MIX_GOLD_AGREEMENT_FRAGMENT_KEY)) {
-                    history.replaceState(null, document.title, window.location.pathname + window.location.search);
-                }
+	        async function restoreTransferredAuthSession() {
+	            const params = new URLSearchParams(window.location.hash.slice(1));
+	            restoreTransferredAgreement(params);
+	            restoreTransferredSocialBar(params);
+	            const encodedSession = params.get(MIX_GOLD_AUTH_FRAGMENT_KEY);
+	            if (!encodedSession) {
+	                if (params.has(MIX_GOLD_AGREEMENT_FRAGMENT_KEY) || params.has(MIX_GOLD_SOCIAL_BAR_FRAGMENT_KEY)) {
+	                    history.replaceState(null, document.title, window.location.pathname + window.location.search);
+	                }
                 return;
             }
 
@@ -5392,6 +5423,7 @@
         function acceptAgreement() {
             localStorage.setItem('agreedToTerms', Date.now().toString());
             document.getElementById('agreement-overlay').classList.remove('active');
+            loadSocialBarOnce();
         }
 
         function declineAgreement() {
@@ -5402,6 +5434,7 @@
             setTimeout(() => {
                 document.getElementById('preloader').classList.add('hidden');
                 checkAgreement();
+                if (getActiveAgreementTimestamp()) loadSocialBarOnce();
             }, 600);
         });
 
@@ -8277,6 +8310,7 @@
             renderPostCategoryTags(videoData);
             renderPostDescription(videoData);
             renderPostModels(videoData);
+            populatePostDetailNativeBanner();
 
             (async () => {
                 await trackPostView(url);
@@ -9122,34 +9156,50 @@
         }, { heading: 'Sign In', subtext: 'Sign in to follow' });
     }
 
-    function buildAdSlotHtml() {
-      return `<!DOCTYPE html><html><head><style>body{margin:0;display:flex;align-items:center;justify-content:center;overflow:hidden;background:transparent;}</style></head><body>
-<script type="text/javascript">
-atOptions = {
-  'key' : '${ADSTERRA_KEY}',
-  'format' : 'iframe',
-  'height' : ${ADSTERRA_HEIGHT},
-  'width' : ${ADSTERRA_WIDTH},
-  'params' : {}
-};
-<\/script>
-<script type="text/javascript" src="//www.highperformanceformat.com/${ADSTERRA_KEY}/invoke.js"><\/script>
-</body></html>`;
+    function injectNativeBanner(slot) {
+      if (!slot || slot.dataset.adLoaded === 'true') return;
+      slot.dataset.adLoaded = 'true';
+      slot.removeAttribute('data-ad-slot');
+      const label = document.createElement('div');
+      label.className = 'pixiv-ad-slot-label';
+      label.textContent = 'Advertisement';
+      const adContainer = document.createElement('div');
+      adContainer.id = ADSTERRA_NATIVE_BANNER_CONTAINER_ID;
+      const script = document.createElement('script');
+      script.async = true;
+      script.dataset.cfasync = 'false';
+      script.dataset.mixGoldNativeBanner = 'true';
+      script.src = ADSTERRA_NATIVE_BANNER_SRC;
+      slot.replaceChildren(label, adContainer, script);
     }
+
     function populateAdSlots(container) {
-      container.querySelectorAll('[data-ad-slot]').forEach(slot => {
-        slot.removeAttribute('data-ad-slot');
-        const label = document.createElement('div');
-        label.className = 'pixiv-ad-slot-label';
-        label.textContent = 'Advertisement';
-        const iframe = document.createElement('iframe');
-        iframe.width = String(ADSTERRA_WIDTH);
-        iframe.height = String(ADSTERRA_HEIGHT);
-        iframe.scrolling = 'no';
-        iframe.srcdoc = buildAdSlotHtml();
-        slot.appendChild(label);
-        slot.appendChild(iframe);
+      if (!container) return;
+      const slots = Array.from(container.querySelectorAll('[data-ad-slot]'));
+      // Zone واحد للمشهد الواحد: نعرض أول موضع فقط ولا نترك مسافات إعلان فارغة لاحقًا.
+      slots.forEach((slot, index) => {
+        if (index === 0) injectNativeBanner(slot);
+        else slot.remove();
       });
+    }
+
+    function populatePostDetailNativeBanner() {
+      const slot = document.getElementById('post-native-ad-slot');
+      injectNativeBanner(slot);
+    }
+
+    function isMangaReaderActive() {
+      return document.getElementById('manga-reader-view')?.classList.contains('active') === true;
+    }
+
+    function loadSocialBarOnce() {
+      if (!getActiveAgreementTimestamp() || isMangaReaderActive() || hasSeenSocialBarInVisit()) return;
+      if (document.querySelector('script[data-mix-gold-social-bar="true"]')) return;
+      markSocialBarSeenInVisit();
+      const script = document.createElement('script');
+      script.dataset.mixGoldSocialBar = 'true';
+      script.src = ADSTERRA_SOCIAL_BAR_SRC;
+      document.body.appendChild(script);
     }
 function toggleSave(url, cardElement) {
             requireAuth(() => {
