@@ -1,8 +1,14 @@
+import { readFile } from "node:fs/promises";
+
 const SUPABASE_URL = "https://sqfvrowywszlcmgfkzgc.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNxZnZyb3d5d3N6bGNtZ2ZremdjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM0NTI4NjgsImV4cCI6MjA5OTAyODg2OH0.e4i3wBOV3T42irXTRhpKr9cwjqtusYj_NHXkZpMBi5Q";
 const DEFAULT_IMAGE = "https://mix-gold-jet.vercel.app/manus-storage/mix-gold-logo_310bd072.png";
 const SHARE_IMAGE_WIDTH = 1200;
 const SHARE_IMAGE_HEIGHT = 675;
+const PAGE_TEMPLATE_URLS = [
+  new URL("../index.html", import.meta.url),
+  new URL("../client/index.html", import.meta.url),
+];
 
 export function sanitizeSlug(value) {
   const slug = Array.isArray(value) ? value[0] : value;
@@ -64,6 +70,18 @@ export function getShareImage(image) {
   imageUrl.searchParams.set("fit", "cover");
   imageUrl.searchParams.set("output", "jpg");
   return imageUrl.toString();
+}
+
+export async function loadPostPageTemplate(reader = readFile) {
+  let lastError;
+  for (const templateUrl of PAGE_TEMPLATE_URLS) {
+    try {
+      return await reader(templateUrl, "utf8");
+    } catch (error) {
+      lastError = error;
+    }
+  }
+  throw lastError || new Error("Post page template is unavailable");
 }
 
 export function buildPreviewHtml(pageHtml, { title, description, image, canonicalUrl, category }) {
@@ -139,12 +157,10 @@ export default async function handler(request, response) {
   const canonicalUrl = slug ? `${origin}/post/${slug}` : `${origin}/`;
 
   try {
-    const [pageResponse, preview] = await Promise.all([
-      fetch(`${origin}/index.html`, { headers: { "User-Agent": "MIX-GOLD preview renderer" } }),
+    const [pageHtml, preview] = await Promise.all([
+      loadPostPageTemplate(),
       slug ? getPostPreviewData(slug) : Promise.resolve(null),
     ]);
-    if (!pageResponse.ok) throw new Error(`Static page returned ${pageResponse.status}`);
-    const pageHtml = await pageResponse.text();
     const post = preview?.post;
     const html = buildPreviewHtml(pageHtml, {
       title: post?.title || "MIX GOLD",
