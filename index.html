@@ -2656,30 +2656,6 @@
         .extra-images-wrapper.show {
             display: flex;
         }
-        .pixiv-ad-slot {
-            width: 100%;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 4px;
-            padding: 10px 0;
-        }
-        .pixiv-ad-slot-label {
-            font-size: 0.7rem;
-            letter-spacing: 0.05em;
-            text-transform: uppercase;
-            color: #888;
-        }
-        .pixiv-ad-slot iframe {
-            border: none;
-            display: block;
-            max-width: 100%;
-        }
-        .pixiv-ad-slot [id^="container-"] {
-            width: 100%;
-            max-width: 100%;
-            overflow: hidden;
-        }
         @media (max-width: 600px) {
             .pixiv-action-bar {
                 padding: 10px 14px;
@@ -4310,8 +4286,6 @@
                 </button>
             </div>
 
-            <div id="post-native-ad-slot" class="pixiv-ad-slot" data-post-native-ad-slot></div>
-
             <div class="suggested-related-section">
                 <div class="sr-tabs">
                     <button class="sr-tab active" id="sr-tab-related" onclick="switchSuggestedRelatedTab('related')">Related</button>
@@ -4937,10 +4911,7 @@
         let mangaReaderDirection = localStorage.getItem('mangaReaderDirection') || 'ltr';
         let followedManga = JSON.parse(localStorage.getItem('mangaFollows')) || [];
 
-        const ADSTERRA_NATIVE_BANNER_SRC = 'https://pl30915590.effectivecpmnetwork.com/1613a422de32b05110d97f825af90bc1/invoke.js';
-        const ADSTERRA_NATIVE_BANNER_CONTAINER_ID = 'container-1613a422de32b05110d97f825af90bc1';
         const ADSTERRA_SOCIAL_BAR_SRC = 'https://pl30915606.effectivecpmnetwork.com/8f/d0/9a/8fd09a90e1362ca968d08563dbdcfb69.js';
-        const AD_FREQUENCY = 8;
 
 
         let isLoggedIn = false;
@@ -8310,8 +8281,6 @@
             renderPostCategoryTags(videoData);
             renderPostDescription(videoData);
             renderPostModels(videoData);
-            populatePostDetailNativeBanner();
-
             (async () => {
                 await trackPostView(url);
                 fetchTotalViews(url);
@@ -8506,21 +8475,16 @@
       const galleryContainer = document.getElementById('pixiv-gallery-container');
       let galleryHtml = '';
       if (Array.isArray(images) && images.length > 1) {
-        const adCount = Math.floor(images.length / AD_FREQUENCY);
-        const totalSlides = images.length + adCount;
+        const totalSlides = images.length;
         galleryHtml = `<div class="pixiv-image-container"><img src="${escapeHtml(images[0])}" alt="${escapeHtml(title)}" onclick="toggleImageZoom(this)"><div class="pixiv-image-counter">1/${totalSlides}</div><button class="pixiv-show-all-btn" onclick="toggleExtraImages(${totalSlides})">Show all</button></div><div class="extra-images-wrapper">`;
         for (let i = 1; i < images.length; i++) {
           galleryHtml += `<div class="pixiv-image-container"><img src="${escapeHtml(images[i])}" alt="${escapeHtml(title)}" onclick="toggleImageZoom(this)"></div>`;
-          if ((i + 1) % AD_FREQUENCY === 0) {
-            galleryHtml += `<div class="pixiv-ad-slot" data-ad-slot></div>`;
-          }
         }
         galleryHtml += `</div>`;
       } else {
         galleryHtml = `<div class="pixiv-image-container"><img src="${escapeHtml(images[0])}" alt="${escapeHtml(title)}" onclick="toggleImageZoom(this)"></div>`;
       }
       galleryContainer.innerHTML = galleryHtml;
-      populateAdSlots(galleryContainer);
 
       document.getElementById('pixiv-title').textContent = title;
       document.getElementById('pixiv-nav-title').textContent = title;
@@ -9154,38 +9118,6 @@
             }
             localStorage.setItem('mangaFollows', JSON.stringify(followedManga));
         }, { heading: 'Sign In', subtext: 'Sign in to follow' });
-    }
-
-    function injectNativeBanner(slot) {
-      if (!slot || slot.dataset.adLoaded === 'true') return;
-      slot.dataset.adLoaded = 'true';
-      slot.removeAttribute('data-ad-slot');
-      const label = document.createElement('div');
-      label.className = 'pixiv-ad-slot-label';
-      label.textContent = 'Advertisement';
-      const adContainer = document.createElement('div');
-      adContainer.id = ADSTERRA_NATIVE_BANNER_CONTAINER_ID;
-      const script = document.createElement('script');
-      script.async = true;
-      script.dataset.cfasync = 'false';
-      script.dataset.mixGoldNativeBanner = 'true';
-      script.src = ADSTERRA_NATIVE_BANNER_SRC;
-      slot.replaceChildren(label, adContainer, script);
-    }
-
-    function populateAdSlots(container) {
-      if (!container) return;
-      const slots = Array.from(container.querySelectorAll('[data-ad-slot]'));
-      // Zone واحد للمشهد الواحد: نعرض أول موضع فقط ولا نترك مسافات إعلان فارغة لاحقًا.
-      slots.forEach((slot, index) => {
-        if (index === 0) injectNativeBanner(slot);
-        else slot.remove();
-      });
-    }
-
-    function populatePostDetailNativeBanner() {
-      const slot = document.getElementById('post-native-ad-slot');
-      injectNativeBanner(slot);
     }
 
     function isMangaReaderActive() {
