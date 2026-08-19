@@ -47,9 +47,40 @@
 
 > إذا كانت الشبكة تعطي عدة خيارات للكود، يجب اختيار الكود المخصص لموقع الويب وليس للتطبيقات أو Smartlink. لا حاجة مطلقًا لمشاركة بيانات الدخول؛ الوسم الإعلاني العام أو معرّف المنطقة وحده هو المطلوب للتركيب.
 
+## خطوات الحصول على الوسوم
+
+ابدأ بإضافة الموقع الرسمي فقط: `https://mix-gold-jet.vercel.app/`. في **ExoClick**، أنشئ Website ثم Zone من نوع **In-Stream Video** واختر **Pre-roll**. بعد اعتماد الموقع أو إنشاء المنطقة، افتح إعدادات الـZone وانسخ **VAST Tag** الكامل، وإن وُجد خيار واحد فقط يكفي إرسال **Zone ID** معه.
+
+في **Adsterra**، أضف الموقع نفسه ثم أنشئ وحدتين منفصلتين: الأولى باسم **Native Banner** والثانية باسم **Social Bar**. من صفحة **Get Code** انسخ كود كل وحدة كاملًا كما يظهر، من أول `<script` إلى نهاية آخر `</script>`، لأن أجزاء الكود لا تكفي للتركيب. عند ضبط Social Bar، استخدم حد ظهور منخفضًا يناسب «مرة لكل زيارة» وتجنب أنواع Popunder أو Interstitial حتى يبقى الموقع غير مزعج.
+
+## قالب الإرسال الجاهز
+
+أرسل الرسالة التالية بعد أخذ الأكواد، وألصق الكود في مكانه كما هو:
+
+```text
+ExoClick — Video Pre-roll
+Zone ID (إن وجد):
+VAST / Ad Tag الكامل:
+
+Adsterra — Native Banner
+الكود الكامل:
+
+Adsterra — Social Bar
+الكود الكامل:
+```
+
+لا ترسل في هذه الرسالة كلمة المرور، البريد، رموز التحقق، بيانات الدفع، مفاتيح API الخاصة، أو لقطات شاشة من صفحة الحساب. إذا لم توافق الشبكة على الموقع بعد، أرسل فقط أن حالة الموقع **Pending** وانتظر الاعتماد؛ لا نركّب Zone تجريبيًا في الموقع الرسمي.
+
 ## تسلسل التنفيذ بعد وصول الأكواد
 
 1. أتحقق من نوع كل وسم ومن عدم احتوائه على صيغ غير مطلوبة، ثم أستبدل النموذج القديم دون كشف أو تخزين بيانات حساب.
 2. أضيف ExoClick فقط لمسار الفيديو، وNative Banner لصفحة التفاصيل والمعرض، ثم Social Bar مرة واحدة للجلسة مع استثناء قارئ المانجا.
 3. أزامن `client/index.html` و`client/public/mix-gold.html`، وأضيف اختبارات حماية تؤكد عدم وجود أي إدراج إعلاني داخل `#manga-reader-view` وعدم تكرار Social Bar.
 4. أشغّل الاختبارات والبناء، وأرفع النسخة إلى GitHub ليُحدّث Vercel الرابط الرسمي `https://mix-gold-jet.vercel.app/`، ثم أرسل لك ملف HTML المحدّث مباشرة.
+
+## المراجع
+
+[1]: https://www.exoclick.com/boost-your-website-revenue-with-video-ads/ "ExoClick — In-Stream Video Ads"
+[2]: https://docs.exoclick.com/tutorials/tutorials/publishers-tutorials/how-implement-in-stream-part3 "ExoClick Docs — Implementing In-Stream Video Ads"
+[3]: https://adsterra.com/native-banner-ad/ "Adsterra — Native Banner Ads"
+[4]: https://adsterra.com/social-bar-ad/ "Adsterra — Social Bar"
