@@ -2,7 +2,7 @@ import { readFile } from "node:fs/promises";
 
 const SUPABASE_URL = "https://sqfvrowywszlcmgfkzgc.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNxZnZyb3d5d3N6bGNtZ2ZremdjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM0NTI4NjgsImV4cCI6MjA5OTAyODg2OH0.e4i3wBOV3T42irXTRhpKr9cwjqtusYj_NHXkZpMBi5Q";
-const DEFAULT_IMAGE = "https://mix-gold-jet.vercel.app/manus-storage/mix-gold-logo_310bd072.png";
+const DEFAULT_IMAGE = "https://mix-goldd.vercel.app/manus-storage/mix-gold-logo_310bd072.png";
 const SHARE_IMAGE_WIDTH = 1200;
 const SHARE_IMAGE_HEIGHT = 675;
 const PAGE_TEMPLATE_URLS = [
@@ -147,7 +147,7 @@ async function getPostPreviewData(slug) {
 
 function requestOrigin(request) {
   const protocol = String(request.headers?.["x-forwarded-proto"] || "https").split(",")[0];
-  const host = request.headers?.host || "mix-gold-jet.vercel.app";
+  const host = request.headers?.host || "mix-goldd.vercel.app";
   return `${protocol}://${host}`;
 }
 

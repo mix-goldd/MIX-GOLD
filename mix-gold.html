@@ -4965,7 +4965,7 @@
         // The temporary token payload stays in the URL fragment only, never in the request or server logs.
         const MIX_GOLD_AUTH_FRAGMENT_KEY = 'mixgold_auth';
         const MIX_GOLD_STANDALONE_PAGES = Object.freeze({
-            home: 'https://mix-gold-jet.vercel.app/',
+            home: 'https://mix-goldd.vercel.app/',
             videos: 'https://mix-gold-jet-anime.vercel.app/',
             manga: 'https://mix-gold-jet-manga.vercel.app/',
             manhwa: 'https://mix-gold-jet-manhwa.vercel.app/',
@@ -6722,7 +6722,7 @@
 
             let html = `
                 <div class="menu-section">
-                    <a class="menu-item${navLockClass('home')}" data-page="home" href="https://mix-gold-jet.vercel.app/" onclick="event.preventDefault(); if (isNavLocked('home')) { showLockedNotice('home'); } else { openHomeStandalone(); }">
+                    <a class="menu-item${navLockClass('home')}" data-page="home" href="https://mix-goldd.vercel.app/" onclick="event.preventDefault(); if (isNavLocked('home')) { showLockedNotice('home'); } else { openHomeStandalone(); }">
                         <div class="menu-icon"><i class="fas fa-home"></i></div>
                         <div class="menu-text">${t('home')}</div>
                         ${navLockIcon('home')}

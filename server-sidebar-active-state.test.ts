@@ -1,8 +1,9 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it, vi } from "vitest";
-import { buildPreviewHtml, findPostBySlug, getPreviewImage, getShareImage, sanitizeSlug, slugFromPostKey } from "../api/post-preview.mjs";
+import { buildPreviewHtml, findPostBySlug, getPreviewImage, getShareImage, loadPostPageTemplate, sanitizeSlug, slugFromPostKey } from "../api/post-preview.mjs";
 
 const source = readFileSync(new URL("../client/index.html", import.meta.url), "utf8");
+const postPreviewSource = readFileSync(new URL("../api/post-preview.mjs", import.meta.url), "utf8");
 const vercelConfig = JSON.parse(readFileSync(new URL("../vercel.json", import.meta.url), "utf8"));
 
 describe("حالة القائمة الجانبية", () => {
@@ -24,21 +25,39 @@ describe("حالة القائمة الجانبية", () => {
     expect(source).toContain("function navigateTo(page, options = {})");
   });
 
-  it("ينقل جلسة المستخدم إلى Home عبر جزء الرابط الآمن", () => {
-    expect(source).toContain("async function openHomeStandalone()");
-    expect(source).toContain("await openStandalonePage('home')");
-    expect(source).toContain('target.hash = new URLSearchParams({ [MIX_GOLD_AUTH_FRAGMENT_KEY]: encodedSession }).toString();');
-    expect(source).toContain('href="https://mix-gold-jet.vercel.app/" onclick="event.preventDefault(); if (isNavLocked(\'home\')) { showLockedNotice(\'home\'); } else { openHomeStandalone(); }"');
+  it("ينقل جلسة المستخدم وقبول Agreement إلى Home عبر جزء الرابط", () => {
+    expect(source).toContain("function openHomeStandalone()");
+    expect(source).toContain("openStandalonePage('home');");
+    expect(source).toContain("const MIX_GOLD_AGREEMENT_FRAGMENT_KEY = 'mixgold_agreement';");
+    expect(source).toContain("transferParams.set(MIX_GOLD_AUTH_FRAGMENT_KEY, encodedSession);");
+    expect(source).toContain("if (agreementTimestamp) transferParams.set(MIX_GOLD_AGREEMENT_FRAGMENT_KEY, agreementTimestamp.toString());");
+    expect(source).toContain('href="https://mix-goldd.vercel.app/" onclick="event.preventDefault(); if (isNavLocked(\'home\')) { showLockedNotice(\'home\'); } else { openHomeStandalone(); }"');
+  });
+
+  it("يستعيد قبول Agreement المنقول قبل فحص طبقة الاتفاقية في الصفحة التالية", () => {
+    expect(source).toContain("function restoreTransferredAgreement(params)");
+    expect(source).toContain("restoreTransferredAgreement(params);");
+    expect(source).toContain("function getActiveAgreementTimestamp()");
+    expect(source).toContain("if (!getActiveAgreementTimestamp()) {");
   });
 
   it("يعرّف روابط Vercel المستقلة للإعدادات وسجل المشاهدات ويحافظ على الجلسة عند فتحها", () => {
     expect(source).toContain("settings: 'https://mix-gold-jet-settings.vercel.app/'");
     expect(source).toContain("'watch-history': 'https://mix-gold-jet-watch-history.vercel.app/'");
-    expect(source).toContain("async function openStandalonePage(page)");
-    expect(source).toContain("await openStandaloneWithSession(destinationUrl, getPageTitle(page) || page)");
+    expect(source).toContain("function openStandalonePage(page)");
+    expect(source).toContain("openStandaloneWithSession(destinationUrl, getPageTitle(page) || page);");
     expect(source).not.toContain("getPageName(page)");
     expect(source).toContain("openStandalonePage('settings')");
     expect(source).toContain("openStandalonePage('watch-history')");
+  });
+
+  it("ينتقل فورًا باستخدام الجلسة المخزنة بدل انتظار طلب Supabase عند لمس القائمة", () => {
+    expect(source).toContain("let navigationSession = null;");
+    expect(source).toContain("function cacheNavigationSession(session)");
+    expect(source).toContain("const session = navigationSession;");
+    expect(source).toContain("cacheNavigationSession(session);");
+    expect(source).not.toContain("new Promise(resolve => setTimeout(() => resolve(null), 700))");
+    expect(source).not.toContain("await openStandaloneWithSession(destinationUrl, getPageTitle(page) || page)");
   });
 
   it("يستعيد جلسة Supabase قبل بناء واجهة الصفحة المستقلة فلا يظهر الحساب كزائر", () => {
@@ -276,7 +295,7 @@ describe("حالة القائمة الجانبية", () => {
       title: "Episode One",
       description: "A concise post description.",
       image: "https://cdn.example.com/post-cover.jpg",
-      canonicalUrl: "https://mix-gold-jet.vercel.app/post/6t1nx1",
+      canonicalUrl: "https://mix-goldd.vercel.app/post/6t1nx1",
       category: "Anime",
     });
     expect(previewHtml).toContain('<meta property="og:title" content="Episode One">');
@@ -284,7 +303,7 @@ describe("حالة القائمة الجانبية", () => {
     expect(previewHtml).toContain('<meta property="og:image:height" content="675">');
     expect(previewHtml).toContain('<meta property="og:image:type" content="image/jpeg">');
     expect(previewHtml).toContain('<meta name="twitter:card" content="summary_large_image">');
-    expect(previewHtml).toContain('<link rel="canonical" href="https://mix-gold-jet.vercel.app/post/6t1nx1">');
+    expect(previewHtml).toContain('<link rel="canonical" href="https://mix-goldd.vercel.app/post/6t1nx1">');
     expect(getPreviewImage({ images: ["https://cdn.example.com/fallback.jpg"] })).toBe("https://cdn.example.com/fallback.jpg");
     expect(getPreviewImage({}, [{ media_kind: "video", url: "https://video.example.com/watch" }])).not.toBe("https://video.example.com/watch");
     const shareImage = getShareImage("https://cdn.example.com/post-cover.jpg");
@@ -298,11 +317,19 @@ describe("حالة القائمة الجانبية", () => {
     expect(slugFromPostKey(postId)).toBe("6t1nx1");
     expect(findPostBySlug([{ id: postId, page_url: "https://vidmoly.example/embed" }], "6t1nx1")).toMatchObject({ id: postId });
     expect(vercelConfig.functions).toEqual(expect.objectContaining({
-      "api/post-preview.mjs": expect.objectContaining({ maxDuration: 10 }),
+      "api/post-preview.mjs": expect.objectContaining({ maxDuration: 10, includeFiles: "{index.html,client/index.html}" }),
     }));
     expect(vercelConfig.rewrites).toEqual(expect.arrayContaining([
       expect.objectContaining({ source: "/post/:slug", destination: "/api/post-preview?slug=:slug" }),
     ]));
+  });
+
+  it("يبني صفحة المنشور من قالب مضمّن بدل طلب داخلي قد تصدّه حماية Vercel", async () => {
+    const pageTemplate = await loadPostPageTemplate();
+    expect(pageTemplate).toContain("<!DOCTYPE html>");
+    expect(postPreviewSource).toContain("export async function loadPostPageTemplate");
+    expect(postPreviewSource).toContain("loadPostPageTemplate(),");
+    expect(postPreviewSource).not.toContain("fetch(`${origin}/index.html`");
   });
 
   it("يبدأ دخول Google على الهاتف بالمسار المدمج وFedCM قبل بديل إعادة التوجيه", () => {
@@ -316,5 +343,32 @@ describe("حالة القائمة الجانبية", () => {
   it("لا تحجب طبقة الاتفاقية المخفية لمس أزرار تسجيل الدخول", () => {
     expect(source).toContain('pointer-events: none;');
     expect(source).toContain('#agreement-overlay.active {\n            visibility: visible;\n            opacity: 1;\n            pointer-events: auto;');
+  });
+
+  it("يزيل Native Banner غير المناسب ويبقي Social Bar فقط دون النموذج التجريبي", () => {
+    expect(source).not.toContain('1613a422de32b05110d97f825af90bc1');
+    expect(source).toContain("const ADSTERRA_SOCIAL_BAR_SRC = 'https://pl30915606.effectivecpmnetwork.com/8f/d0/9a/8fd09a90e1362ca968d08563dbdcfb69.js';");
+    expect(source).not.toContain('id="post-native-ad-slot"');
+    expect(source).not.toContain('function injectNativeBanner');
+    expect(source).not.toContain('function populateAdSlots');
+    expect(source).not.toContain('class="pixiv-ad-slot"');
+    expect(source).not.toContain("YOUR_ADSTERRA_ZONE_KEY_HERE");
+    expect(source).not.toContain("highperformanceformat.com");
+  });
+
+  it("يعرض Social Bar مرة واحدة في الزيارة وينقل حالته بين الصفحات المستقلة", () => {
+    expect(source).toContain("const MIX_GOLD_SOCIAL_BAR_SESSION_KEY = 'mixgold_social_bar_seen_v1';");
+    expect(source).toContain("function hasSeenSocialBarInVisit()");
+    expect(source).toContain("if (hasSeenSocialBarInVisit()) transferParams.set(MIX_GOLD_SOCIAL_BAR_FRAGMENT_KEY, '1');");
+    expect(source).toContain("restoreTransferredSocialBar(params);");
+    expect(source).toContain("function loadSocialBarOnce()");
+    expect(source).toContain("if (!getActiveAgreementTimestamp() || isMangaReaderActive() || hasSeenSocialBarInVisit()) return;");
+  });
+
+  it("لا يحقن Social Bar داخل قارئ المانجا", () => {
+    const readerBlock = source.match(/function renderMangaReaderChapter[\s\S]*?\n        \}/)?.[0] || "";
+    expect(readerBlock).not.toContain("loadSocialBarOnce");
+    expect(source).toContain("function isMangaReaderActive()");
+    expect(source).toContain("return document.getElementById('manga-reader-view')?.classList.contains('active') === true;");
   });
 });
